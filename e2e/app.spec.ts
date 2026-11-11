@@ -84,6 +84,38 @@ test('switches themes without stale node styles', async ({ page }) => {
     .not.toBe(before)
 })
 
+test('adds a child from the node context menu', async ({ page }) => {
+  const canvas = page.locator('[data-mindmap-canvas]')
+  await expect(canvas).toHaveAttribute('data-total-nodes', '13')
+
+  await page.locator('[data-node-id][data-depth="0"]').click({ button: 'right' })
+  const menu = page.locator('[data-context-menu]')
+  await expect(menu).toBeVisible()
+  await expect(menu).toHaveAttribute('data-context-menu-kind', 'node')
+  await expect(page.locator('[data-context-item="edit"]')).toBeFocused()
+
+  await page.keyboard.press('ArrowDown')
+  await expect(page.locator('[data-context-item="add-child"]')).toBeFocused()
+
+  await page.locator('[data-context-item="add-child"]').click()
+
+  await expect(canvas).toHaveAttribute('data-total-nodes', '14')
+  await expect(page.locator('[data-node-editor]')).toBeVisible()
+})
+
+test('opens and closes the canvas context menu', async ({ page }) => {
+  const canvas = page.locator('[data-mindmap-canvas]')
+  await canvas.click({ button: 'right', position: { x: 24, y: 24 } })
+
+  const menu = page.locator('[data-context-menu]')
+  await expect(menu).toBeVisible()
+  await expect(menu).toHaveAttribute('data-context-menu-kind', 'canvas')
+  await expect(page.locator('[data-context-item="fit"]')).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(menu).toHaveCount(0)
+})
+
 test('captures unexpected errors in the error overlay', async ({ page }) => {
   await page.evaluate(() => {
     setTimeout(() => {

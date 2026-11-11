@@ -1,6 +1,17 @@
 <script setup lang="ts">
-import { Keyboard as KeyboardIcon, Maximize, Minus, Plus, X } from '@lucide/vue'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import {
+  CornerDownRight,
+  Keyboard as KeyboardIcon,
+  ListPlus,
+  Maximize,
+  Minus,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Trash2,
+  X,
+} from '@lucide/vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { useLayout } from '@/composables/useLayout'
@@ -31,6 +42,25 @@ interface DragState {
   target: DropTarget | null
 }
 
+type ContextMenuKind = 'node' | 'canvas'
+
+interface ContextMenuState {
+  kind: ContextMenuKind
+  nodeId: string | null
+  x: number
+  y: number
+}
+
+interface ContextMenuItem {
+  id: string
+  label: string
+  shortcut?: string
+  icon: Component
+  disabled?: boolean
+  danger?: boolean
+  action: () => void
+}
+
 const docStore = useDocumentStore()
 const uiStore = useUiStore()
 const viewportStore = useViewportStore()
@@ -41,6 +71,8 @@ const containerRef = ref<HTMLDivElement | null>(null)
 const drag = ref<DragState | null>(null)
 const shortcutsOpen = ref(false)
 const canvasSize = ref({ width: 0, height: 0 })
+const contextMenu = ref<ContextMenuState | null>(null)
+const contextMenuRef = ref<HTMLDivElement | null>(null)
 const isOrgDown = computed(() => docStore.doc.structure === 'org-down')
 const transformStyle = computed(() => ({
   transform: `translate(${viewportStore.x}px, ${viewportStore.y}px) scale(${viewportStore.scale})`,
@@ -72,6 +104,95 @@ const renderLayout = computed(() => {
   return culled
 })
 const isEmpty = computed(() => docStore.doc.root.children.length === 0 && !docStore.editingNodeId)
+const contextNode = computed(() => {
+  const state = contextMenu.value
+  return state?.nodeId ? layout.value.byId.get(state.nodeId) : undefined
+})
+const contextMenuStyle = computed(() => ({
+  left: `${contextMenu.value?.x ?? 0}px`,
+  top: `${contextMenu.value?.y ?? 0}px`,
+}))
+const contextMenuItems = computed<ContextMenuItem[]>(() => {
+  const state = contextMenu.value
+  if (!state) return []
+
+  if (state.kind === 'canvas') {
+    const items: ContextMenuItem[] = [
+      {
+        id: 'fit',
+        label: t('canvas.fit'),
+        shortcut: 'Ctrl+0',
+        icon: Maximize,
+        action: fitToView,
+      },
+      {
+        id: 'reset-zoom',
+        label: t('canvas.zoomReset'),
+        icon: RotateCcw,
+        action: resetZoom,
+      },
+    ]
+
+    if (isEmpty.value) {
+      items.push({
+        id: 'add-first',
+        label: t('empty.add'),
+        icon: Plus,
+        action: () => docStore.addChildTo(docStore.doc.root.id),
+      })
+    }
+
+    return items
+  }
+
+  const node = contextNode.value
+  if (!node) return []
+
+  const isRoot = node.parentId === null
+  const hasChildren = node.node.children.length > 0
+
+  return [
+    {
+      id: 'edit',
+      label: t('context.edit'),
+      shortcut: 'F2',
+      icon: Pencil,
+      action: () => docStore.startEditing(node.id),
+    },
+    {
+      id: 'add-child',
+      label: t('context.addChild'),
+      shortcut: 'Tab',
+      icon: CornerDownRight,
+      action: () => docStore.addChildTo(node.id),
+    },
+    {
+      id: 'add-sibling',
+      label: t('context.addSibling'),
+      shortcut: 'Enter',
+      icon: ListPlus,
+      disabled: isRoot,
+      action: () => docStore.addSiblingTo(node.id),
+    },
+    {
+      id: 'toggle',
+      label: node.node.collapsed ? t('topic.expand') : t('topic.collapse'),
+      shortcut: 'Space',
+      icon: node.node.collapsed ? Plus : Minus,
+      disabled: !hasChildren,
+      action: () => docStore.toggle(node.id),
+    },
+    {
+      id: 'delete',
+      label: t('context.delete'),
+      shortcut: 'Del',
+      icon: Trash2,
+      disabled: isRoot,
+      danger: true,
+      action: () => docStore.remove(node.id),
+    },
+  ]
+})
 
 const dragNode = computed(() => {
   const state = drag.value
@@ -238,9 +359,96 @@ function resetZoom() {
   zoomAtCenter(1 / viewportStore.scale)
 }
 
+function closeContextMenu() {
+  contextMenu.value = null
+}
+
+function openContextMenu(kind: ContextMenuKind, nodeId: string | null, event: MouseEvent) {
+  if (shortcutsOpen.value || drag.value?.active) return
+
+  const fallbackX = window.innerWidth / 2
+  const fallbackY = window.innerHeight / 2
+  contextMenu.value = {
+    kind,
+    nodeId,
+    x: event.clientX || fallbackX,
+    y: event.clientY || fallbackY,
+  }
+
+  nextTick(() => {
+    const element = contextMenuRef.value
+    if (!element || !contextMenu.value) return
+
+    const rect = element.getBoundingClientRect()
+    contextMenu.value.x = Math.max(
+      8,
+      Math.min(contextMenu.value.x, window.innerWidth - rect.width - 8),
+    )
+    contextMenu.value.y = Math.max(
+      8,
+      Math.min(contextMenu.value.y, window.innerHeight - rect.height - 8),
+    )
+    element
+      .querySelector<HTMLButtonElement>('[data-context-item]:not(:disabled)')
+      ?.focus({ preventScroll: true })
+  })
+}
+
+function runContextItem(item: ContextMenuItem) {
+  if (item.disabled) return
+  closeContextMenu()
+  item.action()
+  nextTick(() => {
+    if (!docStore.editingNodeId) containerRef.value?.focus({ preventScroll: true })
+  })
+}
+
+function focusContextItem(direction: 1 | -1) {
+  const items = Array.from(
+    contextMenuRef.value?.querySelectorAll<HTMLButtonElement>(
+      '[data-context-item]:not(:disabled)',
+    ) ?? [],
+  )
+  if (items.length === 0) return
+
+  const current = items.findIndex((item) => item === document.activeElement)
+  const next = current < 0 ? 0 : (current + direction + items.length) % items.length
+  items[next]?.focus({ preventScroll: true })
+}
+
+function onCanvasContextMenu(event: MouseEvent) {
+  const target = event.target
+  const isControl =
+    target instanceof HTMLElement &&
+    Boolean(target.closest('button, input, textarea, select, [contenteditable="true"]'))
+
+  event.preventDefault()
+  if (isControl) return
+  openContextMenu('canvas', null, event)
+}
+
+function onNodeContextMenu(id: string, event: MouseEvent) {
+  event.preventDefault()
+  docStore.select(id)
+  openContextMenu('node', id, event)
+}
+
+function onWindowPointerDown(event: PointerEvent) {
+  if (!contextMenu.value) return
+  const menu = contextMenuRef.value
+  if (menu && event.target instanceof Node && menu.contains(event.target)) return
+  closeContextMenu()
+}
+
+function onWindowBlur() {
+  closeContextMenu()
+}
+
 function onWheel(event: WheelEvent) {
   const element = containerRef.value
   if (!element) return
+
+  closeContextMenu()
 
   if (event.ctrlKey || event.metaKey) {
     const rect = element.getBoundingClientRect()
@@ -252,6 +460,7 @@ function onWheel(event: WheelEvent) {
 }
 
 function onBackgroundPointerDown(event: PointerEvent) {
+  closeContextMenu()
   if (event.button !== 0 && event.button !== 1) return
   if (docStore.editingNodeId || drag.value || shortcutsOpen.value) return
   if (isEditableTarget(event.target)) return
@@ -270,6 +479,7 @@ function onNodeDragStart(id: string, event: PointerEvent) {
   const node = layout.value.byId.get(id)
   if (!node?.parentId || docStore.editingNodeId) return
 
+  closeContextMenu()
   const point = toWorld(event.clientX, event.clientY)
   drag.value = {
     nodeId: id,
@@ -453,6 +663,21 @@ function onKeyDown(event: KeyboardEvent) {
     return
   }
 
+  if (contextMenu.value) {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closeContextMenu()
+      containerRef.value?.focus({ preventScroll: true })
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      focusContextItem(1)
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      focusContextItem(-1)
+    }
+    return
+  }
+
   if (shortcutsOpen.value) {
     if (
       event.key === 'Escape' ||
@@ -607,16 +832,19 @@ function ensureNodeVisible(nodeId: string) {
 }
 
 function onSelect(id: string) {
+  closeContextMenu()
   docStore.select(id)
   containerRef.value?.focus({ preventScroll: true })
 }
 
 function onEdit(id: string) {
+  closeContextMenu()
   docStore.startEditing(id)
   containerRef.value?.focus({ preventScroll: true })
 }
 
 function onToggle(id: string) {
+  closeContextMenu()
   docStore.toggle(id)
   containerRef.value?.focus({ preventScroll: true })
 }
@@ -650,6 +878,8 @@ watch([() => uiStore.outlineOpen, () => uiStore.inspectorOpen], () => nextTick((
 
 onMounted(() => {
   window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('pointerdown', onWindowPointerDown)
+  window.addEventListener('blur', onWindowBlur)
   measureContainer()
   nextTick(() => {
     measureContainer()
@@ -659,6 +889,7 @@ onMounted(() => {
   if (typeof ResizeObserver !== 'undefined' && containerRef.value) {
     resizeObserver = new ResizeObserver(() => {
       measureContainer()
+      closeContextMenu()
       if (!hasFitted) fitToView()
     })
     resizeObserver.observe(containerRef.value)
@@ -667,6 +898,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('pointerdown', onWindowPointerDown)
+  window.removeEventListener('blur', onWindowBlur)
   resizeObserver?.disconnect()
 })
 </script>
@@ -686,6 +919,7 @@ onBeforeUnmount(() => {
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
     @wheel.prevent="onWheel"
+    @contextmenu="onCanvasContextMenu"
   >
     <div
       class="absolute top-0 left-0 origin-top-left will-change-transform"
@@ -707,6 +941,7 @@ onBeforeUnmount(() => {
         @dragstart="onNodeDragStart"
         @commit="onCommit"
         @cancel="onCancel"
+        @contextmenu="onNodeContextMenu"
       />
 
       <div
@@ -734,8 +969,49 @@ onBeforeUnmount(() => {
     <EmptyCanvasState v-if="isEmpty" />
 
     <div
-      class="absolute right-4 bottom-4 flex items-center gap-1 rounded-lg border border-border bg-card/90 p-1 text-card-foreground shadow-sm backdrop-blur"
+      v-if="contextMenu"
+      ref="contextMenuRef"
+      class="fixed z-40 w-56 overflow-hidden rounded-lg border border-border bg-card p-1 text-card-foreground shadow-xl"
+      :style="contextMenuStyle"
+      data-context-menu
+      :data-context-menu-kind="contextMenu.kind"
+      role="menu"
+      :aria-label="contextMenu.kind === 'node' ? t('context.nodeMenu') : t('context.canvasMenu')"
       @pointerdown.stop
+      @contextmenu.stop.prevent
+      @wheel.stop
+    >
+      <div
+        class="px-2 py-1 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase"
+      >
+        {{ contextMenu.kind === 'node' ? t('context.nodeMenu') : t('context.canvasMenu') }}
+      </div>
+      <button
+        v-for="item in contextMenuItems"
+        :key="item.id"
+        type="button"
+        role="menuitem"
+        class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors outline-none hover:bg-accent focus:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+        :class="{ 'text-red-500 hover:bg-red-500/10 focus:bg-red-500/10': item.danger }"
+        :data-context-item="item.id"
+        :disabled="item.disabled"
+        @click="runContextItem(item)"
+      >
+        <component
+          :is="item.icon"
+          class="size-3.5 shrink-0"
+          :class="item.danger ? 'text-red-500' : 'text-muted-foreground'"
+        />
+        <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
+        <span v-if="item.shortcut" class="shrink-0 font-mono text-[10px] text-muted-foreground">
+          {{ item.shortcut }}
+        </span>
+      </button>
+    </div>
+
+    <div
+      class="absolute right-4 bottom-4 flex items-center gap-1 rounded-lg border border-border bg-card/90 p-1 text-card-foreground shadow-sm backdrop-blur"
+      @pointerdown.stop="closeContextMenu"
     >
       <Button variant="ghost" size="icon-sm" :aria-label="t('canvas.zoomOut')" @click="zoomOut">
         <Minus />

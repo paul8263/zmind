@@ -65,4 +65,4 @@ src-tauri/        # Rust 后端
 
 ## 当前进度
 
-M6 已完成：新增按视口裁剪节点与连线、基于文档对象的布局缓存、节点 `v-memo`；新增首次启动引导页、空白文档空状态与中英文示例文档；新增 Vue 全局错误处理、window error / unhandledrejection 捕获、错误覆盖层与可复制日志；新增 Playwright 冒烟测试；配置 NSIS 安装包与便携版 zip。102 项前端单元/组件测试、7 项 E2E 测试与 8 项 Rust 测试通过，`lint`、`typecheck`、`build`、`format:check` 均通过。Windows MVP 已具备发布产物；便携版已验证启动后使用程序旁 `data/EBWebView`，自动保存写入 `data/recovery.json`；自动更新按计划暂缓。完整计划见 [PLAN.md](./PLAN.md)。
+M6 已完成：新增按视口裁剪节点与连线、基于文档对象的布局缓存、节点 `v-memo`；新增首次启动引导页、空白文档空状态与中英文示例文档；新增 Vue 全局错误处理、window error / unhandledrejection 捕获、错误覆盖层与可复制日志；新增画布与节点右键菜单，支持边缘翻转、键盘导航和常用主题操作；新增 Playwright 冒烟测试；配置 NSIS 安装包与便携版 zip。103 项前端单元/组件测试、9 项 E2E 测试与 8 项 Rust 测试通过，`lint`、`typecheck`、`build`、`format:check` 均通过。Windows MVP 已具备发布产物；便携版已验证启动后使用程序旁 `data/EBWebView`，自动保存写入 `data/recovery.json`；自动更新按计划暂缓。完整计划见 [PLAN.md](./PLAN.md)。

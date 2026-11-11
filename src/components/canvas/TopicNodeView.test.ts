@@ -61,4 +61,21 @@ describe('TopicNodeView', () => {
     expect(element.style.borderTopStyle).toBe('none')
     expect(element.style.borderBottomWidth).toBe('2px')
   })
+
+  it('emits a context menu request for the node', async () => {
+    const node = thirdLevelNode()
+    const wrapper = mount(TopicNodeView, {
+      props: {
+        node,
+        selected: false,
+        editing: false,
+        theme: resolveTheme('classic'),
+      },
+      global: { plugins: [pinia] },
+    })
+
+    await wrapper.trigger('contextmenu')
+
+    expect(wrapper.emitted('contextmenu')?.[0]?.[0]).toBe(node.id)
+  })
 })

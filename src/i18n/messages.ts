@@ -131,6 +131,13 @@ const zh = {
   'canvas.hint': 'Tab 子主题 · Enter 同级 · F2 编辑 · 拖拽节点调整结构 · ? 快捷键',
   'canvas.shortcutsCloseHint': '按 ? 或 Esc 关闭',
 
+  'context.nodeMenu': '主题操作',
+  'context.canvasMenu': '画布操作',
+  'context.edit': '编辑主题',
+  'context.addChild': '新建子主题',
+  'context.addSibling': '新建同级主题',
+  'context.delete': '删除主题',
+
   'shortcuts.nodes': '节点',
   'shortcuts.navigation': '导航',
   'shortcuts.canvas': '画布',
@@ -362,6 +369,13 @@ const en: Record<keyof typeof zh, string> = {
   'canvas.shortcutsTitle': 'Shortcuts (?)',
   'canvas.hint': 'Tab child · Enter sibling · F2 edit · Drag to move · ? shortcuts',
   'canvas.shortcutsCloseHint': 'Press ? or Esc to close',
+
+  'context.nodeMenu': 'Topic actions',
+  'context.canvasMenu': 'Canvas actions',
+  'context.edit': 'Edit topic',
+  'context.addChild': 'New child topic',
+  'context.addSibling': 'New sibling topic',
+  'context.delete': 'Delete topic',
 
   'shortcuts.nodes': 'Topics',
   'shortcuts.navigation': 'Navigation',

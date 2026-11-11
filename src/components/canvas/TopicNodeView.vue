@@ -24,6 +24,7 @@ const emit = defineEmits<{
   dragstart: [id: string, event: PointerEvent]
   commit: [id: string, title: string]
   cancel: []
+  contextmenu: [id: string, event: MouseEvent]
 }>()
 
 const { t } = useI18n()
@@ -93,6 +94,20 @@ function handlePointerDown(event: PointerEvent) {
   emit('select', props.node.id)
   emit('dragstart', props.node.id, event)
 }
+
+function handleContextMenu(event: MouseEvent) {
+  if (props.editing) return
+
+  const target = event.target
+  if (
+    target instanceof HTMLElement &&
+    target.closest('textarea, input, select, [contenteditable="true"]')
+  ) {
+    return
+  }
+
+  emit('contextmenu', props.node.id, event)
+}
 </script>
 
 <template>
@@ -104,6 +119,7 @@ function handlePointerDown(event: PointerEvent) {
     :data-depth="node.depth"
     @pointerdown.stop="handlePointerDown"
     @dblclick.stop="emit('edit', node.id)"
+    @contextmenu.stop="handleContextMenu"
   >
     <NodeEditor
       v-if="editing"
