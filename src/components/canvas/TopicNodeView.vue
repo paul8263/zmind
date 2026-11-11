@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Minus, Plus } from '@lucide/vue'
-import { computed } from 'vue'
+import { computed, type CSSProperties } from 'vue'
 
 import type { LayoutNode } from '@/domain/layout/logical'
 import { resolveNodeStyle } from '@/domain/layout/style'
@@ -35,7 +35,7 @@ const resolved = computed(() =>
   resolveNodeStyle(props.node.depth, props.node.branchColor, props.node.node.style, props.theme),
 )
 
-const nodeStyle = computed(() => {
+const nodeStyle = computed<CSSProperties>(() => {
   const style = resolved.value
   const shadows: string[] = []
   const hasBorder = style.shape === 'rounded' || style.shape === 'rect' || style.shape === 'ellipse'
@@ -46,7 +46,7 @@ const nodeStyle = computed(() => {
     shadows.push('0 1px 2px rgba(15, 23, 42, 0.08)')
   }
 
-  return {
+  const result: CSSProperties = {
     left: `${props.node.x}px`,
     top: `${props.node.y}px`,
     width: `${props.node.width}px`,
@@ -62,10 +62,6 @@ const nodeStyle = computed(() => {
     background: style.fill,
     color: style.textColor,
     border: hasBorder ? `${style.borderWidth}px solid ${style.borderColor}` : 'none',
-    borderBottom:
-      style.shape === 'underline'
-        ? `${Math.max(style.borderWidth, 2)}px solid ${style.borderColor}`
-        : undefined,
     boxShadow: shadows.join(', '),
     textAlign: style.textAlign,
     justifyContent:
@@ -75,6 +71,12 @@ const nodeStyle = computed(() => {
           ? 'flex-end'
           : 'center',
   }
+
+  if (style.shape === 'underline') {
+    result.borderBottom = `${Math.max(style.borderWidth, 2)}px solid ${style.borderColor}`
+  }
+
+  return result
 })
 
 function handleCommit(title: string) {

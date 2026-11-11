@@ -1,4 +1,5 @@
 import { layoutDocument } from '@/domain/layout/logical'
+import { borderMetrics } from '@/domain/layout/border'
 import { measureNodeSize } from '@/domain/layout/measure'
 import { FONT_FAMILY, resolveNodeStyle } from '@/domain/layout/style'
 import type { MindMapDocument } from '@/domain/model/types'
@@ -51,13 +52,15 @@ export function renderDocumentSvg(
   const nodes = layout.nodes
     .map((node) => {
       const style = resolveNodeStyle(node.depth, node.branchColor, node.node.style, theme)
+      const borders = borderMetrics(style.shape, style.borderWidth)
       const title = node.node.title || untitledTitle
       const lines = measureNodeSize(title, node.depth, node.node.style).lines
       const lineHeight = Math.round(style.fontSize * style.lineHeight)
-      const contentX = node.x + style.paddingX
-      const contentWidth = node.width - style.paddingX * 2
+      const contentX = node.x + borders.full + style.paddingX
+      const contentWidth = node.width - style.paddingX * 2 - borders.horizontal
       const contentHeight = lines.length * lineHeight
-      const startY = node.y + (node.height - contentHeight) / 2 + lineHeight / 2
+      const contentBoxHeight = node.height - borders.full * 2 - borders.bottom
+      const startY = node.y + borders.full + (contentBoxHeight - contentHeight) / 2 + lineHeight / 2
       const hasBorder =
         style.borderWidth > 0 &&
         (style.shape === 'rounded' || style.shape === 'rect' || style.shape === 'ellipse')

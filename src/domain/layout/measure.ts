@@ -1,5 +1,6 @@
 import type { NodeStyle } from '@/domain/model/types'
 
+import { borderMetrics } from './border'
 import { getEffectiveFont, type NodeVisualStyle } from './style'
 
 let context: CanvasRenderingContext2D | null | undefined
@@ -83,17 +84,21 @@ export function measureNodeSize(
 ): MeasuredNodeSize {
   const { fontSize, fontWeight, font, visual } = getEffectiveFont(depth, nodeStyle)
   const effectiveVisual: NodeVisualStyle = { ...visual, fontSize, fontWeight }
-  const contentMaxWidth = visual.maxWidth - visual.paddingX * 2
+  const borders = borderMetrics(
+    nodeStyle?.shape ?? 'rounded',
+    nodeStyle?.borderWidth ?? (depth <= 1 ? 0 : 1.5),
+  )
+  const contentMaxWidth = visual.maxWidth - visual.paddingX * 2 - borders.horizontal
   const lines = wrapText(title, contentMaxWidth, font)
   const contentWidth = lines.reduce((max, line) => Math.max(max, measureTextWidth(line, font)), 0)
   const width = Math.min(
     visual.maxWidth,
-    Math.max(visual.minWidth, contentWidth + visual.paddingX * 2),
+    Math.max(visual.minWidth, contentWidth + visual.paddingX * 2 + borders.horizontal),
   )
   const lineHeight = Math.round(fontSize * 1.45)
   const height = Math.max(
-    lines.length * lineHeight + visual.paddingY * 2,
-    fontSize + visual.paddingY * 2,
+    lines.length * lineHeight + visual.paddingY * 2 + borders.vertical,
+    fontSize + visual.paddingY * 2 + borders.vertical,
   )
 
   return {
