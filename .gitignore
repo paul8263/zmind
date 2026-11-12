@@ -19,6 +19,10 @@ playwright-report
 # Local IDE metadata
 .openidea
 
+# Local planning docs
+PLAN.md
+MULTI_CANVAS_PLAN.md
+
 # Runtime data (portable mode)
 data
 
