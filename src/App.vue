@@ -138,13 +138,20 @@ function handleMenuAction(action: string) {
   }
 }
 
+function isTextEditingTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    Boolean(target.closest('input, textarea, [contenteditable="true"]'))
+  )
+}
+
 function onWindowKeyDown(event: KeyboardEvent) {
   if (event.key === 'Escape' && recentOpen.value) {
     recentOpen.value = false
     return
   }
 
-  if (isDesktop() || !(event.ctrlKey || event.metaKey)) return
+  if (!(event.ctrlKey || event.metaKey)) return
   const key = event.key.toLowerCase()
 
   if (key === 'n') {
@@ -157,6 +164,11 @@ function onWindowKeyDown(event: KeyboardEvent) {
     event.preventDefault()
     if (event.shiftKey) void fileStore.saveAs()
     else void fileStore.save()
+  } else if (key === 'z' || key === 'y') {
+    if (isTextEditingTarget(event.target) || docStore.editingNodeId) return
+    event.preventDefault()
+    if (key === 'y' || event.shiftKey) redo()
+    else undo()
   }
 }
 

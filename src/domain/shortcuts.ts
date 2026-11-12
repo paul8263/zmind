@@ -50,6 +50,10 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     ],
   },
   {
+    titleKey: 'shortcuts.sheets',
+    items: [{ keys: 'Ctrl + PageUp / Ctrl + PageDown', descriptionKey: 'shortcuts.switchSheet' }],
+  },
+  {
     titleKey: 'shortcuts.history',
     items: [
       { keys: 'Ctrl + Z', descriptionKey: 'shortcuts.undo' },

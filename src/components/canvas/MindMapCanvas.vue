@@ -693,20 +693,6 @@ function onKeyDown(event: KeyboardEvent) {
   if (isEditableTarget(event.target) || docStore.editingNodeId) return
 
   const mod = event.ctrlKey || event.metaKey
-  const key = event.key.toLowerCase()
-
-  if (mod && key === 'z') {
-    event.preventDefault()
-    if (event.shiftKey) docStore.redo()
-    else docStore.undo()
-    return
-  }
-
-  if (mod && key === 'y') {
-    event.preventDefault()
-    docStore.redo()
-    return
-  }
 
   if (event.key === '?' || (mod && event.key === '/')) {
     event.preventDefault()
