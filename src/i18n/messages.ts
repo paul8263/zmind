@@ -16,6 +16,11 @@ const zh = {
   'app.cancel': '取消',
   'app.guide': '使用引导',
 
+  'about.version': '版本 {version}',
+  'about.author': '作者',
+  'about.email': '邮箱',
+  'about.copyright': '© 2026 Yao Zhang 保留所有权利',
+
   'onboarding.title': '欢迎使用 Zmind',
   'onboarding.subtitle': '用键盘快速记录想法，Zmind 会自动完成布局。',
   'onboarding.stepCaptureTitle': '快速记录',
@@ -272,6 +277,11 @@ const en: Record<keyof typeof zh, string> = {
   'app.close': 'Close',
   'app.cancel': 'Cancel',
   'app.guide': 'Getting started',
+
+  'about.version': 'Version {version}',
+  'about.author': 'Author',
+  'about.email': 'Email',
+  'about.copyright': '© 2026 Yao Zhang. All rights reserved.',
 
   'onboarding.title': 'Welcome to Zmind',
   'onboarding.subtitle': 'Capture ideas with the keyboard and let Zmind handle the layout.',

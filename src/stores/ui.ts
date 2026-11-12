@@ -40,6 +40,7 @@ export const useUiStore = defineStore('ui', {
     inspectorOpen: read(KEYS.inspector, '1') !== '0',
     inspectorTab: 'style' as InspectorTab,
     onboardingOpen: read(KEYS.onboarded, '0') !== '1',
+    aboutOpen: false,
   }),
   actions: {
     setDark(value: boolean) {
@@ -73,6 +74,12 @@ export const useUiStore = defineStore('ui', {
     completeOnboarding() {
       this.onboardingOpen = false
       write(KEYS.onboarded, '1')
+    },
+    openAbout() {
+      this.aboutOpen = true
+    },
+    closeAbout() {
+      this.aboutOpen = false
     },
   },
 })

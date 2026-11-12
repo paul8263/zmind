@@ -32,6 +32,9 @@ fn build_menu<R: Runtime>(app: &tauri::AppHandle<R>, locale: &str) -> tauri::Res
     let edit_label = if english { "Edit" } else { "编辑" };
     let undo_label = if english { "Undo" } else { "撤销" };
     let redo_label = if english { "Redo" } else { "重做" };
+    let help_label = if english { "Help" } else { "帮助" };
+    let quick_start_label = if english { "Quick Start" } else { "快速入门" };
+    let about_label = if english { "About Zmind" } else { "关于 Zmind" };
 
     let new_item = MenuItem::with_id(app, "new", new_label, true, Some("CmdOrCtrl+N"))?;
     let open_item = MenuItem::with_id(app, "open", open_label, true, Some("CmdOrCtrl+O"))?;
@@ -53,6 +56,9 @@ fn build_menu<R: Runtime>(app: &tauri::AppHandle<R>, locale: &str) -> tauri::Res
         true,
         Some("CmdOrCtrl+Shift+Z"),
     )?;
+    let quick_start_item =
+        MenuItem::with_id(app, "quick-start", quick_start_label, true, None::<&str>)?;
+    let about_item = MenuItem::with_id(app, "about", about_label, true, None::<&str>)?;
 
     let file_menu = Submenu::with_items(
         app,
@@ -68,8 +74,14 @@ fn build_menu<R: Runtime>(app: &tauri::AppHandle<R>, locale: &str) -> tauri::Res
         ],
     )?;
     let edit_menu = Submenu::with_items(app, edit_label, true, &[&undo_item, &redo_item])?;
+    let help_menu = Submenu::with_items(
+        app,
+        help_label,
+        true,
+        &[&quick_start_item, &about_item],
+    )?;
 
-    Menu::with_items(app, &[&file_menu, &edit_menu])
+    Menu::with_items(app, &[&file_menu, &edit_menu, &help_menu])
 }
 
 #[tauri::command]

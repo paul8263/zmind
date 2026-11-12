@@ -19,6 +19,7 @@ import {
 } from '@lucide/vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 
+import AboutDialog from '@/components/about/AboutDialog.vue'
 import MindMapCanvas from '@/components/canvas/MindMapCanvas.vue'
 import ExportMenu from '@/components/export/ExportMenu.vue'
 import FileDialogs from '@/components/file/FileDialogs.vue'
@@ -134,6 +135,12 @@ function handleMenuAction(action: string) {
       break
     case 'redo':
       redo()
+      break
+    case 'quick-start':
+      uiStore.openOnboarding()
+      break
+    case 'about':
+      uiStore.openAbout()
       break
   }
 }
@@ -502,6 +509,7 @@ onBeforeUnmount(() => {
 
     <FileDialogs />
     <OnboardingDialog />
+    <AboutDialog />
     <AppErrorOverlay />
   </div>
 </template>
