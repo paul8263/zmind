@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic, createWorkbookFromSheet } from '@/domain/model/document'
 import type { TopicNode } from '@/domain/model/types'
 import { useDocumentStore } from '@/stores/document'
 
@@ -18,10 +18,10 @@ describe('OutlineNode', () => {
     setActivePinia(pinia)
 
     store = useDocumentStore()
-    const doc = createBlankDocument()
+    const doc = createBlankSheet()
     child = createTopic('原始标题')
     doc.root.children.push(child)
-    store.loadDocument(doc)
+    store.loadWorkbook(createWorkbookFromSheet(doc))
   })
 
   function mountOutline() {

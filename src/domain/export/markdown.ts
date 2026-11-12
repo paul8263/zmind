@@ -1,11 +1,11 @@
-import type { MindMapDocument, TopicNode } from '@/domain/model/types'
+import type { MindMapSheet, TopicNode } from '@/domain/model/types'
 
 function escapeMarkdownTitle(title: string, fallback: string): string {
   const value = title.trim() || fallback
   return value.replace(/\r?\n/g, '<br>')
 }
 
-export function documentToMarkdown(doc: MindMapDocument, fallbackTitle = 'Untitled'): string {
+export function documentToMarkdown(doc: MindMapSheet, fallbackTitle = 'Untitled'): string {
   const lines = [`# ${escapeMarkdownTitle(doc.root.title, fallbackTitle)}`]
 
   const walk = (nodes: TopicNode[], depth: number) => {

@@ -2,8 +2,8 @@
 
 > 一个仿照 XMind 的桌面脑图工具，基于 Tauri 2 构建。
 >
-> 状态：**M6 已完成，Windows MVP 可发布**
-> 更新日期：2026-11-11
+> 状态：**M6 已完成，M7 多画布已完成，Windows MVP 可发布**
+> 更新日期：2026-11-12
 >
 > 已确认：前端使用 Vue 3；首版只做 Windows；XMind 格式兼容（导入/导出）推迟到后续版本；UI 采用 shadcn-vue + Reka UI + Tailwind CSS，界面尽量贴近 XMind 风格；MVP 节点标题为纯文本 + 换行，富文本放到 Phase 2；界面支持中英文；提供便携版；产品定位为纯本地单机工具，不做云同步/协作。
 
@@ -450,6 +450,18 @@ zmind/
 **交付物**：可对外分发的 Windows MVP 安装包。
 
 **状态：已完成（2026-11-11）**。新增按视口矩形裁剪节点与连线、基于文档对象的布局缓存、节点 `v-memo`；新增首次启动引导页、空白文档空状态、可重新打开的引导入口与中英文示例文档；新增 Vue 全局错误处理、window error / unhandledrejection 捕获、错误覆盖层与可复制日志；新增 103 项前端单元/组件测试、9 项 Playwright E2E 测试与 8 项 Rust 测试；新增画布与节点右键菜单，支持边缘翻转、键盘导航和常用主题操作；新增 NSIS 安装包与便携版 zip 脚本，便携版通过 `portable.marker` 将 WebView2 用户数据与恢复快照放在程序旁的 `data` 目录。已验证安装包产物 `src-tauri/target/release/bundle/nsis/Zmind_0.1.0_x64-setup.exe` 与便携版 `release/Zmind-0.1.0-portable.zip`；便携版启动后使用 `data/EBWebView`，自动保存写入 `data/recovery.json`。自动更新为可选项，首版暂缓。
+
+### M7：多画布（0.5 周）
+
+- [x] 数据模型拆分为 `MindMapWorkbook` / `MindMapSheet`，文件格式升级到 `schemaVersion: 2`
+- [x] 旧版单画布 `.zmind` 与旧恢复快照自动迁移为单画布项目
+- [x] 窗口底部画布管理栏：新建、切换、双击重命名、复制、删除（确认对话框）、右键菜单、拖动排序
+- [x] 撤销/重做、选中节点、缩放平移按画布隔离
+- [x] 导入 Markdown / OPML 时新增画布
+- [x] 中英文文案与 `Ctrl+PageUp/PageDown` 切换快捷键
+- [x] 单元/组件/E2E 测试补齐
+
+**状态：已完成（2026-11-12）**。新增多画布能力：一个 `.zmind` 项目包含多个相互隔离的画布，底部画布栏支持新建、切换、重命名、复制、删除与拖动排序；每个画布拥有独立的节点树、主题、布局、撤销历史、选中节点与视图缩放；旧版单画布文件打开时自动迁移；导入 Markdown/OPML 会新增画布而非替换当前内容。141 项前端单元/组件测试、16 项 Playwright E2E 测试与 8 项 Rust 测试通过，`lint`、`typecheck`、`build`、`format:check` 均通过。完整方案见 [MULTI_CANVAS_PLAN.md](./MULTI_CANVAS_PLAN.md)。
 
 ---
 

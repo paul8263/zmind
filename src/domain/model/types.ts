@@ -75,8 +75,7 @@ export interface Summary {
   title: string
 }
 
-export interface MindMapDocument {
-  schemaVersion: 1
+export interface MindMapSheet {
   id: string
   title: string
   root: TopicNode
@@ -85,6 +84,16 @@ export interface MindMapDocument {
   relationships: Relationship[]
   boundaries: Boundary[]
   summaries: Summary[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MindMapWorkbook {
+  schemaVersion: 2
+  id: string
+  title: string
+  sheets: MindMapSheet[]
+  activeSheetId: string
   createdAt: string
   updatedAt: string
 }

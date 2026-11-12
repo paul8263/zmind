@@ -65,4 +65,4 @@ src-tauri/        # Rust 后端
 
 ## 当前进度
 
-M6 已完成：新增按视口裁剪节点与连线、基于文档对象的布局缓存、节点 `v-memo`；新增首次启动引导页、空白文档空状态与中英文示例文档；新增 Vue 全局错误处理、window error / unhandledrejection 捕获、错误覆盖层与可复制日志；新增画布与节点右键菜单，支持边缘翻转、键盘导航和常用主题操作；新增 Playwright 冒烟测试；配置 NSIS 安装包与便携版 zip。103 项前端单元/组件测试、9 项 E2E 测试与 8 项 Rust 测试通过，`lint`、`typecheck`、`build`、`format:check` 均通过。Windows MVP 已具备发布产物；便携版已验证启动后使用程序旁 `data/EBWebView`，自动保存写入 `data/recovery.json`；自动更新按计划暂缓。完整计划见 [PLAN.md](./PLAN.md)。
+M6 已完成：新增按视口裁剪节点与连线、基于文档对象的布局缓存、节点 `v-memo`；新增首次启动引导页、空白文档空状态与中英文示例文档；新增 Vue 全局错误处理、window error / unhandledrejection 捕获、错误覆盖层与可复制日志；新增画布与节点右键菜单，支持边缘翻转、键盘导航和常用主题操作；新增 Playwright 冒烟测试；配置 NSIS 安装包与便携版 zip。M7 已完成多画布功能：一个 `.zmind` 项目可包含多个相互隔离的画布，窗口底部新增画布管理栏，支持新建、切换、重命名、复制、删除、拖动排序与 `Ctrl+PageUp/PageDown` 切换；撤销历史、选中节点和缩放平移按画布隔离，旧版单画布文件打开时自动迁移为单画布项目，Markdown/OPML 导入会新增画布。141 项前端单元/组件测试、16 项 E2E 测试与 8 项 Rust 测试通过，`lint`、`typecheck`、`build`、`format:check` 均通过。Windows MVP 已具备发布产物；便携版已验证启动后使用程序旁 `data/EBWebView`，自动保存写入 `data/recovery.json`；自动更新按计划暂缓。完整计划见 [PLAN.md](./PLAN.md)，多画布方案见 [MULTI_CANVAS_PLAN.md](./MULTI_CANVAS_PLAN.md)。

@@ -1,14 +1,14 @@
 import { computed, toRaw } from 'vue'
 
 import { layoutDocument, type LayoutResult } from '@/domain/layout/logical'
-import type { MindMapDocument } from '@/domain/model/types'
+import type { MindMapSheet } from '@/domain/model/types'
 import type { MindMapTheme } from '@/domain/theme'
 import { useDocumentStore } from '@/stores/document'
 import { useThemeStore } from '@/stores/theme'
 
 let layoutCache = new WeakMap<object, WeakMap<object, LayoutResult>>()
 
-function cachedLayout(doc: MindMapDocument, theme: MindMapTheme): LayoutResult {
+function cachedLayout(doc: MindMapSheet, theme: MindMapTheme): LayoutResult {
   const docKey = toRaw(doc)
   let byTheme = layoutCache.get(docKey)
   if (!byTheme) {

@@ -2,13 +2,13 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic } from '@/domain/model/document'
 
 import { resolveDropTarget } from './drop'
 import { layoutDocument, type LayoutNode } from './logical'
 
 function makeLayout(structure: 'logic-right' | 'org-down' = 'logic-right') {
-  const doc = createBlankDocument()
+  const doc = createBlankSheet()
   doc.structure = structure
 
   const a = createTopic('a')

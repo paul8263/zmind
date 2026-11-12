@@ -3,7 +3,7 @@
 import { produce } from 'immer'
 import { describe, expect, it } from 'vitest'
 
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic } from '@/domain/model/document'
 import { findNode } from '@/domain/model/tree'
 
 import {
@@ -16,7 +16,7 @@ import {
 } from './tree'
 
 function makeDocument() {
-  const doc = createBlankDocument()
+  const doc = createBlankSheet()
   const a = createTopic('a')
   const b = createTopic('b')
   const a1 = createTopic('a1')

@@ -2,14 +2,14 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic } from '@/domain/model/document'
 import { resolveTheme } from '@/domain/theme'
 
 import { documentToMarkdown } from './markdown'
 import { renderDocumentSvg } from './svg'
 
 function makeDocument() {
-  const doc = createBlankDocument('Export demo')
+  const doc = createBlankSheet('Export demo')
   doc.root.title = 'Root & <Center>'
   const child = createTopic('Child\nwith two lines')
   child.style = { shape: 'ellipse', lineStyle: 'dashed', lineWidth: 4 }

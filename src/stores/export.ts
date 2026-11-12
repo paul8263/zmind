@@ -5,7 +5,7 @@ import { ExportTooLargeError, svgToPngBlob } from '@/domain/export/raster'
 import { renderDocumentSvg } from '@/domain/export/svg'
 import { parseMarkdown } from '@/domain/import/markdown'
 import { parseOpml } from '@/domain/import/opml'
-import type { MindMapDocument } from '@/domain/model/types'
+import type { MindMapSheet } from '@/domain/model/types'
 import { translate } from '@/i18n'
 import type { MessageKey } from '@/i18n/messages'
 import {
@@ -255,17 +255,17 @@ export const useExportStore = defineStore('export', {
         return
       }
 
-      let doc: MindMapDocument
+      let sheet: MindMapSheet
       try {
         const fallback = translate(locale, 'file.untitled')
-        doc = extension === 'opml' ? parseOpml(text, fallback) : parseMarkdown(text, fallback)
+        sheet = extension === 'opml' ? parseOpml(text, fallback) : parseMarkdown(text, fallback)
       } catch (error) {
         this.setError('import.errorParse', error)
         return
       }
 
-      useFileStore().requestLoadDocument(doc)
-      this.setNotice('import.success', doc.title)
+      useDocumentStore().addSheetFrom(sheet)
+      this.setNotice('import.success', sheet.title)
     },
     setNotice(key: MessageKey, detail = '') {
       clearNoticeTimer()

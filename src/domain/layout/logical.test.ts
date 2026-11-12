@@ -2,13 +2,13 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic } from '@/domain/model/document'
 import { resolveTheme } from '@/domain/theme'
 
 import { H_GAP, ORG_V_GAP, layoutDocument } from './logical'
 
 function makeDocument() {
-  const doc = createBlankDocument()
+  const doc = createBlankSheet()
   const a = createTopic('a')
   const b = createTopic('b')
   const a1 = createTopic('a1')

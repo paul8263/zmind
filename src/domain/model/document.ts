@@ -1,4 +1,4 @@
-import type { MindMapDocument, TopicNode } from './types'
+import type { MindMapSheet, MindMapWorkbook, TopicNode } from './types'
 
 export function createId(prefix = 'node'): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -17,12 +17,11 @@ export function createTopic(title = '中心主题'): TopicNode {
   }
 }
 
-export function createBlankDocument(title = '未命名脑图', rootTitle = '中心主题'): MindMapDocument {
+export function createBlankSheet(title = '画布 1', rootTitle = '中心主题'): MindMapSheet {
   const now = new Date().toISOString()
 
   return {
-    schemaVersion: 1,
-    id: createId('doc'),
+    id: createId('sheet'),
     title,
     root: createTopic(rootTitle),
     themeId: 'classic',
@@ -35,8 +34,31 @@ export function createBlankDocument(title = '未命名脑图', rootTitle = '中�
   }
 }
 
-export function createDemoDocument(locale: 'zh' | 'en' = 'zh'): MindMapDocument {
-  const doc = createBlankDocument()
+export function createBlankWorkbook(
+  title = '未命名脑图',
+  sheetTitle = '画布 1',
+  rootTitle = '中心主题',
+): MindMapWorkbook {
+  const sheet = createBlankSheet(sheetTitle, rootTitle)
+  return createWorkbookFromSheet(sheet, title)
+}
+
+export function createWorkbookFromSheet(sheet: MindMapSheet, title = sheet.title): MindMapWorkbook {
+  const now = new Date().toISOString()
+
+  return {
+    schemaVersion: 2,
+    id: createId('workbook'),
+    title,
+    sheets: [sheet],
+    activeSheetId: sheet.id,
+    createdAt: now,
+    updatedAt: now,
+  }
+}
+
+export function createDemoSheet(locale: 'zh' | 'en' = 'zh'): MindMapSheet {
+  const doc = createBlankSheet()
   const content =
     locale === 'en'
       ? {

@@ -1,5 +1,5 @@
-import { createBlankDocument, createTopic } from '@/domain/model/document'
-import type { MindMapDocument, TopicNode } from '@/domain/model/types'
+import { createBlankSheet, createTopic } from '@/domain/model/document'
+import type { MindMapSheet, TopicNode } from '@/domain/model/types'
 
 interface HeadingToken {
   kind: 'heading'
@@ -110,10 +110,10 @@ function buildRoot(tokens: MarkdownToken[], fallbackTitle: string): TopicNode {
   return root
 }
 
-export function parseMarkdown(markdown: string, fallbackTitle = 'Untitled'): MindMapDocument {
+export function parseMarkdown(markdown: string, fallbackTitle = 'Untitled'): MindMapSheet {
   const tokens = tokenize(markdown)
   const root = buildRoot(tokens, fallbackTitle)
-  const doc = createBlankDocument(root.title, root.title)
+  const doc = createBlankSheet(root.title, root.title)
   doc.root = root
   doc.title = root.title
   return doc

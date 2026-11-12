@@ -130,6 +130,57 @@ test('promotes and demotes outline topics from the context menu', async ({ page 
   await expect(menu).toHaveCount(0)
 })
 
+test('creates a sheet and keeps content isolated', async ({ page }) => {
+  const tabs = page.locator('[data-sheet-tab]')
+  await expect(tabs).toHaveCount(1)
+
+  await page.locator('[data-sheet-add]').click()
+  await expect(tabs).toHaveCount(2)
+  await expect(tabs.nth(1)).toHaveAttribute('data-sheet-active', 'true')
+  await expect(page.locator('[data-empty-state]')).toBeVisible()
+
+  await page.locator('[data-empty-add]').click()
+  const editor = page.locator('[data-node-editor]')
+  await editor.fill('Second sheet topic')
+  await editor.press('Enter')
+  await expect(page.locator('[data-mindmap-canvas]').getByText('Second sheet topic')).toBeVisible()
+
+  await tabs.nth(0).click()
+  await expect(tabs.nth(0)).toHaveAttribute('data-sheet-active', 'true')
+  await expect(page.locator('[data-mindmap-canvas]')).toHaveAttribute('data-total-nodes', '13')
+  await expect(page.locator('[data-mindmap-canvas]').getByText('Zmind')).toBeVisible()
+  await expect(page.locator('[data-mindmap-canvas]').getByText('Second sheet topic')).toHaveCount(0)
+
+  await tabs.nth(1).click()
+  await expect(page.locator('[data-mindmap-canvas]').getByText('Second sheet topic')).toBeVisible()
+})
+
+test('renames, reorders and deletes sheets', async ({ page }) => {
+  const tabs = page.locator('[data-sheet-tab]')
+  await page.locator('[data-sheet-add]').click()
+  await expect(tabs).toHaveCount(2)
+
+  await tabs.nth(1).dblclick()
+  const input = page.locator('[data-sheet-rename]')
+  await expect(input).toBeVisible()
+  await input.fill('计划')
+  await input.press('Enter')
+  await expect(tabs.nth(1)).toHaveText('计划')
+
+  await tabs.nth(1).click({ button: 'right' })
+  await page.locator('[data-sheet-context-item="move-left"]').click()
+  await expect(tabs.nth(0)).toHaveText('计划')
+  await expect(tabs.nth(0)).toHaveAttribute('data-sheet-active', 'true')
+
+  await tabs.nth(0).click({ button: 'right' })
+  await page.locator('[data-sheet-context-item="delete"]').click()
+  await expect(page.locator('[data-sheet-delete-dialog]')).toBeVisible()
+  await page.locator('[data-sheet-delete-confirm]').click()
+
+  await expect(tabs).toHaveCount(1)
+  await expect(page.locator('[data-sheet-delete-dialog]')).toHaveCount(0)
+})
+
 test('shows the empty state for a new document', async ({ page }) => {
   await page.locator('[data-file-new]').click()
   await expect(page.locator('[data-empty-state]')).toBeVisible()
@@ -217,6 +268,29 @@ test('opens and closes the canvas context menu', async ({ page }) => {
 
   await page.keyboard.press('Escape')
   await expect(menu).toHaveCount(0)
+})
+
+test('reorders sheets by dragging', async ({ page }) => {
+  await page.locator('[data-sheet-add]').click()
+  await page.locator('[data-sheet-add]').click()
+
+  const tabs = page.locator('[data-sheet-tab]')
+  await expect(tabs).toHaveCount(3)
+  const thirdId = await tabs.nth(2).getAttribute('data-sheet-tab')
+
+  const third = await tabs.nth(2).boundingBox()
+  const first = await tabs.nth(0).boundingBox()
+  if (!third || !first) throw new Error('missing sheet tab bounds')
+
+  await page.mouse.move(third.x + third.width / 2, third.y + third.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(third.x - 20, third.y + third.height / 2, { steps: 4 })
+  await page.mouse.move(first.x + 4, first.y + first.height / 2, { steps: 6 })
+
+  await expect(page.locator('[data-sheet-drop]')).toBeVisible()
+  await page.mouse.up()
+
+  await expect(tabs.nth(0)).toHaveAttribute('data-sheet-tab', thirdId)
 })
 
 test('captures unexpected errors in the error overlay', async ({ page }) => {

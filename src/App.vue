@@ -25,6 +25,7 @@ import FileDialogs from '@/components/file/FileDialogs.vue'
 import InspectorPanel from '@/components/inspector/InspectorPanel.vue'
 import OnboardingDialog from '@/components/onboarding/OnboardingDialog.vue'
 import OutlinePanel from '@/components/outline/OutlinePanel.vue'
+import SheetBar from '@/components/sheets/SheetBar.vue'
 import AppErrorOverlay from '@/components/system/AppErrorOverlay.vue'
 import { Button } from '@/components/ui/button'
 import type { Structure } from '@/domain/model/types'
@@ -484,6 +485,8 @@ onBeforeUnmount(() => {
 
       <InspectorPanel v-if="uiStore.inspectorOpen" />
     </main>
+
+    <SheetBar />
 
     <FileDialogs />
     <OnboardingDialog />

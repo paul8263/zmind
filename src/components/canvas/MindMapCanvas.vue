@@ -874,6 +874,15 @@ watch(
   () => nextTick(() => fitToView()),
 )
 
+watch(
+  () => docStore.activeSheetId,
+  (sheetId, previousId) => {
+    if (previousId) viewportStore.remember(previousId)
+    closeContextMenu()
+    if (!viewportStore.recall(sheetId)) nextTick(() => fitToView())
+  },
+)
+
 watch([() => uiStore.outlineOpen, () => uiStore.inspectorOpen], () => nextTick(() => fitToView()))
 
 onMounted(() => {

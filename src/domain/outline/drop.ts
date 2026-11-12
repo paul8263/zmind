@@ -1,5 +1,5 @@
 import { findNode, findParent, isDescendant } from '@/domain/model/tree'
-import type { MindMapDocument } from '@/domain/model/types'
+import type { MindMapSheet } from '@/domain/model/types'
 
 export type OutlineDropMode = 'before' | 'after' | 'child'
 
@@ -14,7 +14,7 @@ export interface OutlineDropTarget {
  * the dragged node has been removed from its old parent.
  */
 export function resolveOutlineDrop(
-  doc: MindMapDocument,
+  doc: MindMapSheet,
   draggedId: string,
   targetId: string,
   mode: OutlineDropMode,

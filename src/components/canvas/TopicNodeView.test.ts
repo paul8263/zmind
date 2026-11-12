@@ -3,13 +3,13 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { layoutDocument } from '@/domain/layout/logical'
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic } from '@/domain/model/document'
 import { resolveTheme } from '@/domain/theme'
 
 import TopicNodeView from './TopicNodeView.vue'
 
 function thirdLevelNode(shape?: 'underline') {
-  const doc = createBlankDocument()
+  const doc = createBlankSheet()
   const child = createTopic('Child')
   const grandchild = createTopic('Tab 创建子主题')
   if (shape) grandchild.style = { shape }

@@ -3,7 +3,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic, createWorkbookFromSheet } from '@/domain/model/document'
 import * as bridge from '@/lib/fileBridge'
 
 import { useDocumentStore } from './document'
@@ -40,7 +40,7 @@ const mocked = {
 }
 
 function makeDocument() {
-  const doc = createBlankDocument('Export demo')
+  const doc = createBlankSheet('Export demo')
   doc.root.title = 'Root'
   doc.root.children.push(createTopic('Child'))
   return doc
@@ -76,7 +76,7 @@ describe('export store', () => {
   it('exports Markdown with a zmind extension appended when needed', async () => {
     const fileStore = useFileStore()
     const exportStore = useExportStore()
-    fileStore.loadDocument(makeDocument(), 'C:/maps/demo.zmind')
+    fileStore.loadWorkbook(createWorkbookFromSheet(makeDocument()), 'C:/maps/demo.zmind')
     mocked.saveFileDialog.mockResolvedValue('C:/maps/export-demo')
 
     await exportStore.exportMarkdown()
@@ -91,7 +91,7 @@ describe('export store', () => {
   it('exports SVG content', async () => {
     const fileStore = useFileStore()
     const exportStore = useExportStore()
-    fileStore.loadDocument(makeDocument(), 'C:/maps/demo.zmind')
+    fileStore.loadWorkbook(createWorkbookFromSheet(makeDocument()), 'C:/maps/demo.zmind')
     mocked.saveFileDialog.mockResolvedValue('C:/maps/export-demo.svg')
 
     await exportStore.exportSvg()
@@ -116,6 +116,8 @@ describe('export store', () => {
 
     expect(docStore.doc.title).toBe('Imported')
     expect(docStore.doc.root.children[0].title).toBe('Child')
+    expect(docStore.sheets).toHaveLength(2)
+    expect(docStore.activeSheetId).toBe(docStore.sheets[1].id)
     expect(fileStore.path).toBeNull()
     expect(fileStore.isDirty).toBe(true)
     expect(exportStore.noticeKey).toBe('import.success')

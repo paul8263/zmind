@@ -8,8 +8,21 @@ export const useViewportStore = defineStore('viewport', {
     x: 0,
     y: 0,
     scale: 1,
+    views: {} as Record<string, { x: number; y: number; scale: number }>,
   }),
   actions: {
+    remember(sheetId: string) {
+      this.views[sheetId] = { x: this.x, y: this.y, scale: this.scale }
+    },
+    recall(sheetId: string): boolean {
+      const view = this.views[sheetId]
+      if (!view) return false
+
+      this.x = view.x
+      this.y = view.y
+      this.scale = view.scale
+      return true
+    },
     set(x: number, y: number, scale: number) {
       this.x = x
       this.y = y

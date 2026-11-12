@@ -1,5 +1,5 @@
-import { createBlankDocument, createTopic } from '@/domain/model/document'
-import type { MindMapDocument, TopicNode } from '@/domain/model/types'
+import { createBlankSheet, createTopic } from '@/domain/model/document'
+import type { MindMapSheet, TopicNode } from '@/domain/model/types'
 
 function childOutlines(element: Element): Element[] {
   return Array.from(element.children).filter((child) => child.localName.toLowerCase() === 'outline')
@@ -15,7 +15,7 @@ function mapOutline(element: Element, fallbackTitle: string): TopicNode {
   return node
 }
 
-export function parseOpml(text: string, fallbackTitle = 'Untitled'): MindMapDocument {
+export function parseOpml(text: string, fallbackTitle = 'Untitled'): MindMapSheet {
   const xml = new DOMParser().parseFromString(text, 'application/xml')
   if (xml.querySelector('parsererror')) {
     throw new Error('The OPML document is not valid XML')
@@ -39,7 +39,7 @@ export function parseOpml(text: string, fallbackTitle = 'Untitled'): MindMapDocu
   }
 
   root.title = root.title || fallbackTitle
-  const doc = createBlankDocument(root.title, root.title)
+  const doc = createBlankSheet(root.title, root.title)
   doc.root = root
   doc.title = root.title
   return doc

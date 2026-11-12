@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createBlankDocument } from '@/domain/model/document'
+import { createBlankSheet, createWorkbookFromSheet } from '@/domain/model/document'
 import { useDocumentStore } from '@/stores/document'
 import { useFileStore } from '@/stores/file'
 
@@ -19,7 +19,7 @@ describe('empty canvas state', () => {
 
   it('adds the first topic to an empty document', async () => {
     const docStore = useDocumentStore()
-    docStore.loadDocument(createBlankDocument())
+    docStore.loadWorkbook(createWorkbookFromSheet(createBlankSheet()))
 
     const wrapper = mount(EmptyCanvasState, {
       global: { plugins: [pinia] },
@@ -33,7 +33,7 @@ describe('empty canvas state', () => {
 
   it('loads the example document from the empty state', async () => {
     const docStore = useDocumentStore()
-    docStore.loadDocument(createBlankDocument())
+    docStore.loadWorkbook(createWorkbookFromSheet(createBlankSheet()))
     const fileStore = useFileStore()
     const loadExample = vi.spyOn(fileStore, 'loadExample')
 

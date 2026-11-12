@@ -1,7 +1,7 @@
 import { findNode, findParent, isDescendant } from '@/domain/model/tree'
-import type { MindMapDocument, TopicNode } from '@/domain/model/types'
+import type { MindMapSheet, TopicNode } from '@/domain/model/types'
 
-export function insertChild(draft: MindMapDocument, parentId: string, child: TopicNode): boolean {
+export function insertChild(draft: MindMapSheet, parentId: string, child: TopicNode): boolean {
   const parent = findNode(draft.root, parentId)
   if (!parent) return false
 
@@ -10,7 +10,7 @@ export function insertChild(draft: MindMapDocument, parentId: string, child: Top
   return true
 }
 
-export function insertSibling(draft: MindMapDocument, nodeId: string, sibling: TopicNode): boolean {
+export function insertSibling(draft: MindMapSheet, nodeId: string, sibling: TopicNode): boolean {
   const parent = findParent(draft.root, nodeId)
   if (!parent) return false
 
@@ -21,7 +21,7 @@ export function insertSibling(draft: MindMapDocument, nodeId: string, sibling: T
   return true
 }
 
-export function removeNode(draft: MindMapDocument, nodeId: string): string | null {
+export function removeNode(draft: MindMapSheet, nodeId: string): string | null {
   if (draft.root.id === nodeId) return null
 
   const parent = findParent(draft.root, nodeId)
@@ -34,7 +34,7 @@ export function removeNode(draft: MindMapDocument, nodeId: string): string | nul
   return parent.id
 }
 
-export function renameNode(draft: MindMapDocument, nodeId: string, title: string): boolean {
+export function renameNode(draft: MindMapSheet, nodeId: string, title: string): boolean {
   const node = findNode(draft.root, nodeId)
   if (!node) return false
 
@@ -42,7 +42,7 @@ export function renameNode(draft: MindMapDocument, nodeId: string, title: string
   return true
 }
 
-export function toggleCollapse(draft: MindMapDocument, nodeId: string): boolean {
+export function toggleCollapse(draft: MindMapSheet, nodeId: string): boolean {
   const node = findNode(draft.root, nodeId)
   if (!node || node.children.length === 0) return false
 
@@ -51,7 +51,7 @@ export function toggleCollapse(draft: MindMapDocument, nodeId: string): boolean 
 }
 
 export function moveNode(
-  draft: MindMapDocument,
+  draft: MindMapSheet,
   nodeId: string,
   newParentId: string,
   index: number,

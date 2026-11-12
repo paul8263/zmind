@@ -1,9 +1,13 @@
 import { defineStore } from 'pinia'
 import { watch } from 'vue'
 
-import { createBlankDocument, createDemoDocument } from '@/domain/model/document'
-import { safeParseDocument } from '@/domain/model/schema'
-import type { MindMapDocument } from '@/domain/model/types'
+import {
+  createBlankWorkbook,
+  createDemoSheet,
+  createWorkbookFromSheet,
+} from '@/domain/model/document'
+import { safeParseWorkbook } from '@/domain/model/schema'
+import type { MindMapWorkbook } from '@/domain/model/types'
 import { translate } from '@/i18n'
 import type { MessageKey } from '@/i18n/messages'
 import {
@@ -34,10 +38,10 @@ export interface RecentFile {
 export interface RecoverySnapshot {
   path: string | null
   savedAt: string
-  document: MindMapDocument
+  workbook: MindMapWorkbook
 }
 
-type PendingAction = 'new' | 'open' | 'open-path' | 'exit' | 'replace-doc'
+type PendingAction = 'new' | 'open' | 'open-path' | 'exit' | 'replace-workbook'
 
 let stopDirtyWatch: (() => void) | undefined
 let stopAutosaveWatch: (() => void) | undefined
@@ -68,19 +72,19 @@ function safeFileTitle(title: string, fallback: string): string {
   return cleaned || fallback
 }
 
-function serializeDocument(doc: MindMapDocument, pretty = false): string {
-  return pretty ? JSON.stringify(doc, null, 2) : JSON.stringify(doc)
+function serializeWorkbook(workbook: MindMapWorkbook, pretty = false): string {
+  return pretty ? JSON.stringify(workbook, null, 2) : JSON.stringify(workbook)
 }
 
-function documentFingerprint(doc: MindMapDocument): string {
-  const rest: Partial<MindMapDocument> = { ...doc }
-  delete rest.updatedAt
-  return JSON.stringify(rest)
+function workbookFingerprint(workbook: MindMapWorkbook): string {
+  return JSON.stringify(workbook, (key, value) =>
+    key === 'updatedAt' || key === 'activeSheetId' ? undefined : value,
+  )
 }
 
-function parseDocumentText(text: string): MindMapDocument | null {
+function parseWorkbookText(text: string): MindMapWorkbook | null {
   try {
-    const parsed = safeParseDocument(JSON.parse(text))
+    const parsed = safeParseWorkbook(JSON.parse(text))
     return parsed.success ? parsed.data : null
   } catch {
     return null
@@ -92,17 +96,18 @@ function parseRecovery(text: string): RecoverySnapshot | null {
     const data = JSON.parse(text) as {
       path?: unknown
       savedAt?: unknown
+      workbook?: unknown
       document?: unknown
     }
     if (typeof data.savedAt !== 'string') return null
 
-    const parsed = safeParseDocument(data.document)
+    const parsed = safeParseWorkbook(data.workbook ?? data.document)
     if (!parsed.success) return null
 
     return {
       path: typeof data.path === 'string' ? data.path : null,
       savedAt: data.savedAt,
-      document: parsed.data,
+      workbook: parsed.data,
     }
   } catch {
     return null
@@ -164,7 +169,7 @@ export const useFileStore = defineStore('file', {
     unsavedOpen: false,
     pendingAction: null as PendingAction | null,
     pendingOpenPath: null as string | null,
-    pendingDocument: null as MindMapDocument | null,
+    pendingWorkbook: null as MindMapWorkbook | null,
     recovery: null as RecoverySnapshot | null,
     recoveryOpen: false,
     exitRequested: false,
@@ -172,22 +177,22 @@ export const useFileStore = defineStore('file', {
   getters: {
     isDirty: (state) => state.dirty,
     displayName(state): string {
-      return state.path ? fileStem(state.path) : useDocumentStore().doc.title
+      return state.path ? fileStem(state.path) : useDocumentStore().workbook.title
     },
     defaultSavePath(state): string {
       if (state.path) return state.path
       const locale = useUiStore().locale
-      const title = useDocumentStore().doc.title
+      const title = useDocumentStore().workbook.title
       return `${safeFileTitle(title, translate(locale, 'file.untitledName'))}.zmind`
     },
     pendingName(state): string {
-      if (state.pendingDocument) return state.pendingDocument.title
+      if (state.pendingWorkbook) return state.pendingWorkbook.title
       if (state.pendingOpenPath) return fileStem(state.pendingOpenPath)
-      return state.path ? fileStem(state.path) : useDocumentStore().doc.title
+      return state.path ? fileStem(state.path) : useDocumentStore().workbook.title
     },
     recoveryName(state): string {
       if (!state.recovery) return ''
-      return state.recovery.path ? fileStem(state.recovery.path) : state.recovery.document.title
+      return state.recovery.path ? fileStem(state.recovery.path) : state.recovery.workbook.title
     },
     recoveryTime(state): string {
       if (!state.recovery) return ''
@@ -199,13 +204,13 @@ export const useFileStore = defineStore('file', {
     startTracking() {
       disposeWatchers()
       const docStore = useDocumentStore()
-      this.savedSnapshot = documentFingerprint(docStore.doc)
+      this.savedSnapshot = workbookFingerprint(docStore.workbook)
       this.dirty = false
 
       stopDirtyWatch = watch(
         () => docStore.revision,
         () => {
-          this.dirty = documentFingerprint(docStore.doc) !== this.savedSnapshot
+          this.dirty = workbookFingerprint(docStore.workbook) !== this.savedSnapshot
         },
         { flush: 'sync' },
       )
@@ -247,11 +252,11 @@ export const useFileStore = defineStore('file', {
       this.recoveryOpen = true
     },
     markClean() {
-      this.savedSnapshot = documentFingerprint(useDocumentStore().doc)
+      this.savedSnapshot = workbookFingerprint(useDocumentStore().workbook)
       this.dirty = false
     },
-    loadDocument(doc: MindMapDocument, path: string | null) {
-      useDocumentStore().loadDocument(doc)
+    loadWorkbook(workbook: MindMapWorkbook, path: string | null) {
+      useDocumentStore().loadWorkbook(workbook)
       this.path = path
       this.markClean()
       this.recovery = null
@@ -261,39 +266,40 @@ export const useFileStore = defineStore('file', {
     },
     newNow() {
       const locale = useUiStore().locale
-      const doc = createBlankDocument(
+      const workbook = createBlankWorkbook(
         translate(locale, 'file.untitled'),
+        translate(locale, 'sheet.defaultName', { index: 1 }),
         translate(locale, 'file.centralTopic'),
       )
-      this.loadDocument(doc, null)
+      this.loadWorkbook(workbook, null)
     },
     loadExample() {
-      this.requestLoadDocument(createDemoDocument(useUiStore().locale))
+      this.requestLoadWorkbook(createWorkbookFromSheet(createDemoSheet(useUiStore().locale)))
     },
-    loadExternalDocument(doc: MindMapDocument) {
-      useDocumentStore().loadDocument(doc)
+    loadExternalWorkbook(workbook: MindMapWorkbook) {
+      useDocumentStore().loadWorkbook(workbook)
       this.path = null
-      this.savedSnapshot = documentFingerprint(doc)
+      this.savedSnapshot = workbookFingerprint(workbook)
       this.dirty = true
       this.recovery = null
       this.recoveryOpen = false
       void clearRecovery().catch(() => undefined)
     },
-    requestLoadDocument(doc: MindMapDocument) {
+    requestLoadWorkbook(workbook: MindMapWorkbook) {
       if (this.dirty) {
-        this.pendingAction = 'replace-doc'
+        this.pendingAction = 'replace-workbook'
         this.pendingOpenPath = null
-        this.pendingDocument = doc
+        this.pendingWorkbook = workbook
         this.unsavedOpen = true
         return
       }
-      this.loadExternalDocument(doc)
+      this.loadExternalWorkbook(workbook)
     },
     requestNew() {
       if (this.dirty) {
         this.pendingAction = 'new'
         this.pendingOpenPath = null
-        this.pendingDocument = null
+        this.pendingWorkbook = null
         this.unsavedOpen = true
         return
       }
@@ -320,7 +326,7 @@ export const useFileStore = defineStore('file', {
       if (this.dirty) {
         this.pendingAction = 'open'
         this.pendingOpenPath = null
-        this.pendingDocument = null
+        this.pendingWorkbook = null
         this.unsavedOpen = true
         return
       }
@@ -330,13 +336,13 @@ export const useFileStore = defineStore('file', {
       this.busy = true
       try {
         const contents = await readDocumentFile(path)
-        const doc = parseDocumentText(contents)
-        if (!doc) {
+        const workbook = parseWorkbookText(contents)
+        if (!workbook) {
           this.setError('file.errorInvalid')
           return false
         }
 
-        this.loadDocument(doc, path)
+        this.loadWorkbook(workbook, path)
         return true
       } catch (error) {
         this.setError('file.errorOpen', error)
@@ -349,7 +355,7 @@ export const useFileStore = defineStore('file', {
       if (this.dirty) {
         this.pendingAction = 'open-path'
         this.pendingOpenPath = path
-        this.pendingDocument = null
+        this.pendingWorkbook = null
         this.unsavedOpen = true
         return
       }
@@ -386,7 +392,7 @@ export const useFileStore = defineStore('file', {
     async writeTo(path: string): Promise<boolean> {
       this.busy = true
       try {
-        const contents = serializeDocument(useDocumentStore().doc, true)
+        const contents = serializeWorkbook(useDocumentStore().workbook, true)
         await writeDocumentFile(path, contents)
         this.path = path
         this.markClean()
@@ -406,7 +412,7 @@ export const useFileStore = defineStore('file', {
       if (this.dirty) {
         this.pendingAction = 'exit'
         this.pendingOpenPath = null
-        this.pendingDocument = null
+        this.pendingWorkbook = null
         this.unsavedOpen = true
         return
       }
@@ -422,23 +428,23 @@ export const useFileStore = defineStore('file', {
     executePending() {
       const action = this.pendingAction
       const path = this.pendingOpenPath
-      const doc = this.pendingDocument
+      const workbook = this.pendingWorkbook
       this.unsavedOpen = false
       this.pendingAction = null
       this.pendingOpenPath = null
-      this.pendingDocument = null
+      this.pendingWorkbook = null
 
       if (action === 'new') this.newNow()
       else if (action === 'open') void this.openDialogNow()
       else if (action === 'open-path' && path) void this.openPathNow(path)
-      else if (action === 'replace-doc' && doc) this.loadExternalDocument(doc)
+      else if (action === 'replace-workbook' && workbook) this.loadExternalWorkbook(workbook)
       else if (action === 'exit') this.exitRequested = true
     },
     cancelPending() {
       this.unsavedOpen = false
       this.pendingAction = null
       this.pendingOpenPath = null
-      this.pendingDocument = null
+      this.pendingWorkbook = null
     },
     resetExitRequest() {
       this.exitRequested = false
@@ -446,9 +452,9 @@ export const useFileStore = defineStore('file', {
     restoreRecovery() {
       if (!this.recovery) return
       const snapshot = this.recovery
-      useDocumentStore().loadDocument(snapshot.document)
+      useDocumentStore().loadWorkbook(snapshot.workbook)
       this.path = snapshot.path
-      this.savedSnapshot = documentFingerprint(snapshot.document)
+      this.savedSnapshot = workbookFingerprint(snapshot.workbook)
       this.dirty = true
       this.recovery = null
       this.recoveryOpen = false
@@ -464,7 +470,7 @@ export const useFileStore = defineStore('file', {
       const payload = JSON.stringify({
         path: this.path,
         savedAt: new Date().toISOString(),
-        document: useDocumentStore().doc,
+        workbook: useDocumentStore().workbook,
       })
 
       try {

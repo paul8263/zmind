@@ -2,7 +2,7 @@ import { layoutDocument } from '@/domain/layout/logical'
 import { borderMetrics } from '@/domain/layout/border'
 import { measureNodeSize } from '@/domain/layout/measure'
 import { FONT_FAMILY, resolveNodeStyle } from '@/domain/layout/style'
-import type { MindMapDocument } from '@/domain/model/types'
+import type { MindMapSheet } from '@/domain/model/types'
 import type { MindMapTheme } from '@/domain/theme'
 
 export interface SvgExportOptions {
@@ -30,7 +30,7 @@ function number(value: number): string {
 }
 
 export function renderDocumentSvg(
-  doc: MindMapDocument,
+  doc: MindMapSheet,
   theme: MindMapTheme,
   options: SvgExportOptions = {},
 ): RenderedSvg {

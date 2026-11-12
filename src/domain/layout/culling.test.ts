@@ -2,13 +2,13 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic } from '@/domain/model/document'
 
 import { cullLayout, rectsIntersect } from './culling'
 import { layoutDocument } from './logical'
 
 function makeLayout() {
-  const doc = createBlankDocument()
+  const doc = createBlankSheet()
   const first = createTopic('first')
   const second = createTopic('second')
   first.children.push(createTopic('first child'))

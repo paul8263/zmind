@@ -3,7 +3,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic, createWorkbookFromSheet } from '@/domain/model/document'
 import { findNode } from '@/domain/model/tree'
 
 import { useDocumentStore } from './document'
@@ -158,20 +158,20 @@ describe('document store', () => {
     expect(findNode(store.doc.root, node.id)?.style?.shape).toBe('rect')
   })
 
-  it('loads a document and resets editing state and history', () => {
+  it('loads a workbook and resets editing state and history', () => {
     const store = useDocumentStore()
     store.rename(store.doc.root.id, 'changed')
     expect(store.revision).toBeGreaterThan(0)
 
-    const next = createBlankDocument('Loaded')
+    const next = createBlankSheet('Loaded')
     next.root.children.push(createTopic('child'))
-    store.loadDocument(next)
+    store.loadWorkbook(createWorkbookFromSheet(next))
 
     expect(store.doc).toStrictEqual(next)
     expect(store.selectedNodeId).toBe(next.root.id)
     expect(store.editingNodeId).toBeNull()
-    expect(store.undoStack).toHaveLength(0)
-    expect(store.redoStack).toHaveLength(0)
+    expect(store.historyFor(next.id).undo).toHaveLength(0)
+    expect(store.historyFor(next.id).redo).toHaveLength(0)
     expect(store.revision).toBe(0)
   })
 
@@ -198,6 +198,75 @@ describe('document store', () => {
       })
     }
 
-    expect(store.undoStack).toHaveLength(100)
+    expect(store.historyFor(store.activeSheetId).undo).toHaveLength(100)
+  })
+
+  it('adds, switches, renames, duplicates and removes sheets', () => {
+    const store = useDocumentStore()
+    const firstId = store.activeSheetId
+
+    const secondId = store.addSheet()
+    expect(store.sheets).toHaveLength(2)
+    expect(store.activeSheetId).toBe(secondId)
+    expect(store.doc.root.title).toBe('中心主题')
+
+    store.renameSheet(secondId, '计划')
+    expect(store.findSheet(secondId)?.title).toBe('计划')
+
+    const copyId = store.duplicateSheet(secondId)
+    expect(copyId).toBeTruthy()
+    expect(store.sheets).toHaveLength(3)
+    expect(store.activeSheetId).toBe(copyId)
+
+    expect(store.removeSheet(copyId as string)).toBe(true)
+    expect(store.sheets).toHaveLength(2)
+    expect(store.activeSheetId).toBe(secondId)
+
+    expect(store.removeSheet(secondId)).toBe(true)
+    expect(store.activeSheetId).toBe(firstId)
+
+    expect(store.removeSheet(firstId)).toBe(false)
+    expect(store.sheets).toHaveLength(1)
+  })
+
+  it('keeps undo history isolated per sheet', () => {
+    const store = useDocumentStore()
+    store.mutate((draft) => {
+      draft.root.children = []
+    })
+    store.select(store.doc.root.id)
+    store.addChildTo()
+    const firstId = store.activeSheetId
+    expect(store.canUndo).toBe(true)
+
+    const secondId = store.addSheet()
+    expect(store.canUndo).toBe(false)
+
+    store.mutate((draft) => {
+      draft.root.children = []
+    })
+    store.select(store.doc.root.id)
+    store.addChildTo()
+    expect(store.doc.root.children).toHaveLength(1)
+
+    store.switchSheet(firstId)
+    expect(store.doc.root.children).toHaveLength(1)
+    expect(store.canUndo).toBe(true)
+
+    store.undo()
+    expect(store.doc.root.children).toHaveLength(0)
+
+    store.switchSheet(secondId)
+    expect(store.doc.root.children).toHaveLength(1)
+  })
+
+  it('moves a sheet to a new index', () => {
+    const store = useDocumentStore()
+    const firstId = store.activeSheetId
+    const secondId = store.addSheet()
+    const thirdId = store.addSheet()
+
+    expect(store.moveSheet(thirdId, 0)).toBe(true)
+    expect(store.sheets.map((sheet) => sheet.id)).toEqual([thirdId, firstId, secondId])
   })
 })

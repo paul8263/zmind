@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { createBlankDocument, createTopic } from '@/domain/model/document'
+import { createBlankSheet, createTopic } from '@/domain/model/document'
 
 import { resolveOutlineMove } from './move'
 
 function makeDoc() {
-  const doc = createBlankDocument()
+  const doc = createBlankSheet()
   const a = createTopic('A')
   const b = createTopic('B')
   const c = createTopic('C')

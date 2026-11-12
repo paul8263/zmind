@@ -1,4 +1,4 @@
-import type { MindMapDocument, Structure, TopicNode } from '@/domain/model/types'
+import type { MindMapSheet, Structure, TopicNode } from '@/domain/model/types'
 import { CLASSIC_THEME, type MindMapTheme } from '@/domain/theme'
 
 import { measureNodeSize } from './measure'
@@ -320,7 +320,7 @@ function finishLayout(nodes: LayoutNode[], structure: Structure): LayoutResult {
 }
 
 function layoutHorizontal(
-  doc: MindMapDocument,
+  doc: MindMapSheet,
   direction: HorizontalDirection,
   theme: MindMapTheme,
 ): LayoutResult {
@@ -330,14 +330,14 @@ function layoutHorizontal(
   return finishLayout(nodes, doc.structure)
 }
 
-function layoutVertical(doc: MindMapDocument, theme: MindMapTheme): LayoutResult {
+function layoutVertical(doc: MindMapSheet, theme: MindMapTheme): LayoutResult {
   const measured = measureSubtree(doc.root, 0, 'vertical')
   const nodes: LayoutNode[] = []
   placeVertical(measured, 0, 0, 0, null, theme.rootFill, theme, nodes)
   return finishLayout(nodes, doc.structure)
 }
 
-function layoutBoth(doc: MindMapDocument, theme: MindMapTheme): LayoutResult {
+function layoutBoth(doc: MindMapSheet, theme: MindMapTheme): LayoutResult {
   const measured = measureSubtree(doc.root, 0, 'horizontal')
   const rightChildren: MeasuredNode[] = []
   const leftChildren: MeasuredNode[] = []
@@ -407,7 +407,7 @@ function layoutBoth(doc: MindMapDocument, theme: MindMapTheme): LayoutResult {
 }
 
 export function layoutDocument(
-  doc: MindMapDocument,
+  doc: MindMapSheet,
   theme: MindMapTheme = CLASSIC_THEME,
 ): LayoutResult {
   switch (doc.structure) {

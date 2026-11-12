@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
-import type { MindMapDocument, TopicNode } from './types'
+import { createId } from './document'
+import type { MindMapSheet, MindMapWorkbook, TopicNode } from './types'
 
 const lineStyleSchema = z.enum(['solid', 'dashed', 'dotted'])
 const nodeShapeSchema = z.enum(['rounded', 'rect', 'ellipse', 'underline', 'none'])
@@ -82,8 +83,7 @@ const summarySchema = z.object({
   title: z.string(),
 })
 
-export const mindMapDocumentSchema: z.ZodType<MindMapDocument> = z.object({
-  schemaVersion: z.literal(1),
+const sheetShape = {
   id: z.string(),
   title: z.string(),
   root: topicNodeSchema,
@@ -94,12 +94,70 @@ export const mindMapDocumentSchema: z.ZodType<MindMapDocument> = z.object({
   summaries: z.array(summarySchema),
   createdAt: z.string(),
   updatedAt: z.string(),
-})
-
-export function parseDocument(input: unknown): MindMapDocument {
-  return mindMapDocumentSchema.parse(input)
 }
 
-export function safeParseDocument(input: unknown) {
-  return mindMapDocumentSchema.safeParse(input)
+export const mindMapSheetSchema: z.ZodType<MindMapSheet> = z.object(sheetShape)
+
+const legacyDocumentSchema = z.object({
+  schemaVersion: z.literal(1),
+  ...sheetShape,
+})
+
+export const mindMapWorkbookSchema: z.ZodType<MindMapWorkbook> = z.object({
+  schemaVersion: z.literal(2),
+  id: z.string(),
+  title: z.string(),
+  sheets: z.array(mindMapSheetSchema).min(1),
+  activeSheetId: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+export function migrateLegacyDocument(input: unknown): MindMapWorkbook {
+  const legacy = legacyDocumentSchema.parse(input)
+  const sheet: MindMapSheet = {
+    id: legacy.id,
+    title: legacy.title,
+    root: legacy.root,
+    themeId: legacy.themeId,
+    structure: legacy.structure,
+    relationships: legacy.relationships,
+    boundaries: legacy.boundaries,
+    summaries: legacy.summaries,
+    createdAt: legacy.createdAt,
+    updatedAt: legacy.updatedAt,
+  }
+
+  return {
+    schemaVersion: 2,
+    id: createId('workbook'),
+    title: sheet.title,
+    sheets: [sheet],
+    activeSheetId: sheet.id,
+    createdAt: sheet.createdAt,
+    updatedAt: sheet.updatedAt,
+  }
+}
+
+export function parseWorkbook(input: unknown): MindMapWorkbook {
+  if (isRecord(input) && input.schemaVersion === 1) {
+    return migrateLegacyDocument(input)
+  }
+
+  return mindMapWorkbookSchema.parse(input)
+}
+
+export type WorkbookParseResult =
+  { success: true; data: MindMapWorkbook } | { success: false; error: unknown }
+
+export function safeParseWorkbook(input: unknown): WorkbookParseResult {
+  try {
+    return { success: true, data: parseWorkbook(input) }
+  } catch (error) {
+    return { success: false, error }
+  }
 }

@@ -1,5 +1,5 @@
 import { findNode, findParent } from '@/domain/model/tree'
-import type { MindMapDocument } from '@/domain/model/types'
+import type { MindMapSheet } from '@/domain/model/types'
 
 export type OutlineMoveAction = 'up' | 'down' | 'promote' | 'demote'
 
@@ -9,7 +9,7 @@ export interface OutlineMoveTarget {
 }
 
 export function resolveOutlineMove(
-  doc: MindMapDocument,
+  doc: MindMapSheet,
   nodeId: string,
   action: OutlineMoveAction,
 ): OutlineMoveTarget | null {
