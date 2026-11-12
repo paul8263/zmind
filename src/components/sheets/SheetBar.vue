@@ -415,6 +415,17 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
+      <button
+        type="button"
+        class="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+        :title="t('sheet.new')"
+        :aria-label="t('sheet.new')"
+        data-sheet-add
+        @click="docStore.addSheet()"
+      >
+        <Plus class="size-3.5" />
+      </button>
+
       <div
         v-if="drag?.active && drag.insertIndex !== null"
         class="pointer-events-none absolute top-1 bottom-1 w-0.5 rounded-full bg-sky-500"
@@ -422,17 +433,6 @@ onBeforeUnmount(() => {
         data-sheet-drop
       />
     </div>
-
-    <button
-      type="button"
-      class="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-      :title="t('sheet.new')"
-      :aria-label="t('sheet.new')"
-      data-sheet-add
-      @click="docStore.addSheet()"
-    >
-      <Plus class="size-3.5" />
-    </button>
 
     <div
       v-if="contextMenu"
