@@ -124,7 +124,7 @@ export const useDocumentStore = defineStore('document', {
     stopEditing() {
       this.editingNodeId = null
     },
-    addChildTo(parentId?: string) {
+    addChildTo(parentId?: string, source: 'canvas' | 'outline' = 'canvas') {
       const targetId = parentId ?? this.selectedNodeId ?? this.doc.root.id
       const uiStore = useUiStore()
       const node = createTopic(translate(uiStore.locale, 'topic.new'))
@@ -137,14 +137,14 @@ export const useDocumentStore = defineStore('document', {
       if (inserted) {
         this.selectedNodeId = node.id
         this.editingNodeId = node.id
-        this.editingSource = 'canvas'
+        this.editingSource = source
       }
     },
-    addSiblingTo(nodeId?: string) {
+    addSiblingTo(nodeId?: string, source: 'canvas' | 'outline' = 'canvas') {
       const targetId = nodeId ?? this.selectedNodeId ?? this.doc.root.id
 
       if (targetId === this.doc.root.id) {
-        this.addChildTo(targetId)
+        this.addChildTo(targetId, source)
         return
       }
 
@@ -158,7 +158,7 @@ export const useDocumentStore = defineStore('document', {
       if (inserted) {
         this.selectedNodeId = node.id
         this.editingNodeId = node.id
-        this.editingSource = 'canvas'
+        this.editingSource = source
       }
     },
     remove(nodeId?: string) {

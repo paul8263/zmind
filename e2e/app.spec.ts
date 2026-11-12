@@ -76,6 +76,60 @@ test('reorders outline entries by dragging and syncs the canvas', async ({ page 
   expect(after?.y).not.toBe(before?.y)
 })
 
+test('moves outline topics from the context menu and syncs the canvas', async ({ page }) => {
+  await page.locator('[data-toggle-outline]').click()
+  const panel = page.locator('[data-outline-panel]')
+  const rows = panel.locator('[data-outline-node]')
+  const menu = panel.locator('[data-outline-context-menu]')
+
+  const movedId = await rows.nth(1).getAttribute('data-outline-node')
+  expect(movedId).toBeTruthy()
+
+  const canvasNode = page.locator(`[data-node-id="${movedId}"]`)
+  const before = await canvasNode.boundingBox()
+
+  await rows.nth(1).click({ button: 'right' })
+  await expect(menu).toBeVisible()
+  await expect(page.locator('[data-outline-context-item="edit"]')).toBeFocused()
+  await expect(page.locator('[data-outline-context-item="move-up"]')).toBeDisabled()
+
+  await page.locator('[data-outline-context-item="move-down"]').click()
+
+  await expect(menu).toHaveCount(0)
+  await expect(rows.nth(5)).toHaveAttribute('data-outline-node', movedId)
+
+  const after = await canvasNode.boundingBox()
+  expect(after).not.toBeNull()
+  expect(after?.y).not.toBe(before?.y)
+})
+
+test('promotes and demotes outline topics from the context menu', async ({ page }) => {
+  await page.locator('[data-toggle-outline]').click()
+  const panel = page.locator('[data-outline-panel]')
+  const rows = panel.locator('[data-outline-node]')
+  const menu = panel.locator('[data-outline-context-menu]')
+
+  const promotedId = await rows.nth(3).getAttribute('data-outline-node')
+  expect(promotedId).toBeTruthy()
+
+  await rows.nth(3).click({ button: 'right' })
+  await page.locator('[data-outline-context-item="promote"]').click()
+  await expect(rows.nth(4)).toHaveAttribute('data-outline-node', promotedId)
+  await expect(rows.nth(4)).toHaveCSS('padding-left', '20px')
+
+  await rows.nth(4).click({ button: 'right' })
+  await page.locator('[data-outline-context-item="demote"]').click()
+  await expect(rows.nth(4)).toHaveAttribute('data-outline-node', promotedId)
+  await expect(rows.nth(4)).toHaveCSS('padding-left', '34px')
+
+  await rows.nth(0).click({ button: 'right' })
+  await expect(page.locator('[data-outline-context-item="move-up"]')).toBeDisabled()
+  await expect(page.locator('[data-outline-context-item="delete"]')).toBeDisabled()
+
+  await page.keyboard.press('Escape')
+  await expect(menu).toHaveCount(0)
+})
+
 test('shows the empty state for a new document', async ({ page }) => {
   await page.locator('[data-file-new]').click()
   await expect(page.locator('[data-empty-state]')).toBeVisible()
