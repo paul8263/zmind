@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Keyboard, Move, Save } from '@lucide/vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n'
@@ -9,6 +10,10 @@ import { useUiStore } from '@/stores/ui'
 const fileStore = useFileStore()
 const uiStore = useUiStore()
 const { t } = useI18n()
+
+const visible = computed(
+  () => uiStore.onboardingOpen && !fileStore.recoveryOpen && !fileStore.unsavedOpen,
+)
 
 const steps = [
   {
@@ -41,14 +46,25 @@ function loadExample() {
   fileStore.loadExample()
   uiStore.completeOnboarding()
 }
+
+function onKeydown(event: KeyboardEvent) {
+  if (!visible.value || event.key !== 'Escape') return
+
+  event.preventDefault()
+  event.stopPropagation()
+  start()
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown, true))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
 </script>
 
 <template>
   <div
-    v-if="uiStore.onboardingOpen && !fileStore.recoveryOpen && !fileStore.unsavedOpen"
+    v-if="visible"
     class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-6 backdrop-blur-[2px]"
     data-onboarding
-    @pointerdown.stop
+    @pointerdown.self.stop="start"
     @wheel.stop
   >
     <div
