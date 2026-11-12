@@ -174,6 +174,7 @@ export const useDocumentStore = defineStore('document', {
       this.workbook = workbook
       const active = workbook.sheets.find((sheet) => sheet.id === workbook.activeSheetId)
       this.activeSheetId = active?.id ?? workbook.sheets[0].id
+      this.workbook.activeSheetId = this.activeSheetId
       this.selectedNodeId = this.doc.root.id
       this.editingNodeId = null
       this.selectionBySheet = { [this.activeSheetId]: this.selectedNodeId }
@@ -347,6 +348,7 @@ export const useDocumentStore = defineStore('document', {
 
       this.selectionBySheet[this.activeSheetId] = this.selectedNodeId
       this.activeSheetId = id
+      this.workbook.activeSheetId = id
       const remembered = this.selectionBySheet[id]
       this.selectedNodeId =
         remembered && findNode(target.root, remembered) ? remembered : target.root.id
@@ -392,6 +394,7 @@ export const useDocumentStore = defineStore('document', {
       if (this.activeSheetId === id) {
         const next = this.workbook.sheets[Math.min(index, this.workbook.sheets.length - 1)]
         this.activeSheetId = next.id
+        this.workbook.activeSheetId = next.id
         const remembered = this.selectionBySheet[next.id]
         this.selectedNodeId =
           remembered && findNode(next.root, remembered) ? remembered : next.root.id
