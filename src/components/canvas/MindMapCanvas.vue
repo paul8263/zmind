@@ -303,7 +303,7 @@ function nodeMemo(node: LayoutNode) {
     node.height,
     node.branchColor,
     docStore.selectedNodeId === node.id,
-    docStore.editingNodeId === node.id,
+    docStore.editingNodeId === node.id && docStore.editingSource === 'canvas',
     drag.value?.active === true && drag.value.nodeId === node.id,
     theme.value,
   ]
@@ -932,7 +932,7 @@ onBeforeUnmount(() => {
         v-memo="nodeMemo(node)"
         :node="node"
         :selected="docStore.selectedNodeId === node.id"
-        :editing="docStore.editingNodeId === node.id"
+        :editing="docStore.editingNodeId === node.id && docStore.editingSource === 'canvas'"
         :dragging="drag?.active && drag.nodeId === node.id"
         :theme="theme"
         @select="onSelect"

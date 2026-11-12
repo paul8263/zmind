@@ -27,6 +27,23 @@ test('creates and edits a topic on the canvas', async ({ page }) => {
   await expect(canvas.getByText('E2E Topic')).toBeVisible()
 })
 
+test('edits a topic from the outline and syncs the canvas', async ({ page }) => {
+  await page.locator('[data-toggle-outline]').click()
+  const panel = page.locator('[data-outline-panel]')
+  await expect(panel).toBeVisible()
+
+  await panel.locator('[data-outline-node]').nth(1).dblclick()
+  const editor = panel.locator('[data-outline-editor]')
+  await expect(editor).toBeVisible()
+
+  await editor.fill('Outline Topic')
+  await editor.press('Enter')
+
+  await expect(panel.locator('[data-outline-editor]')).toHaveCount(0)
+  await expect(page.locator('[data-outline-node]').nth(1)).toContainText('Outline Topic')
+  await expect(page.locator('[data-mindmap-canvas]').getByText('Outline Topic')).toBeVisible()
+})
+
 test('shows the empty state for a new document', async ({ page }) => {
   await page.locator('[data-file-new]').click()
   await expect(page.locator('[data-empty-state]')).toBeVisible()

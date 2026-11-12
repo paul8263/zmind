@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronDown, ChevronRight } from '@lucide/vue'
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import type { TopicNode } from '@/domain/model/types'
 import { useI18n } from '@/i18n'
@@ -16,18 +16,72 @@ const { t } = useI18n()
 
 const hasChildren = computed(() => props.node.children.length > 0)
 const isCollapsed = computed(() => props.node.collapsed)
+const isEditing = computed(
+  () => docStore.editingNodeId === props.node.id && docStore.editingSource === 'outline',
+)
+
+const editorValue = ref('')
+const editorRef = ref<HTMLTextAreaElement | null>(null)
+let finished = false
+
+watch(
+  isEditing,
+  async (editing) => {
+    if (!editing) return
+
+    editorValue.value = props.node.title
+    finished = false
+    await nextTick()
+    resizeEditor()
+    editorRef.value?.focus()
+    editorRef.value?.select()
+  },
+  { immediate: true },
+)
+
+function resizeEditor() {
+  const element = editorRef.value
+  if (!element) return
+
+  element.style.height = 'auto'
+  element.style.height = `${element.scrollHeight}px`
+}
 
 function select() {
   docStore.select(props.node.id)
 }
 
 function edit() {
-  docStore.startEditing(props.node.id)
+  docStore.startEditing(props.node.id, 'outline')
 }
 
 function toggle(event: MouseEvent) {
   event.stopPropagation()
   docStore.toggle(props.node.id)
+}
+
+function commit() {
+  if (finished || !isEditing.value) return
+  finished = true
+  docStore.rename(props.node.id, editorValue.value)
+}
+
+function cancel() {
+  if (finished) return
+  finished = true
+  docStore.stopEditing()
+}
+
+function onEditorKeydown(event: KeyboardEvent) {
+  event.stopPropagation()
+
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault()
+    commit()
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    cancel()
+  }
 }
 </script>
 
@@ -57,7 +111,21 @@ function toggle(event: MouseEvent) {
       </button>
       <span v-else class="size-4 shrink-0" />
 
-      <span class="truncate" :class="{ 'text-muted-foreground': !node.title }">
+      <textarea
+        v-if="isEditing"
+        ref="editorRef"
+        v-model="editorValue"
+        rows="1"
+        class="min-w-0 flex-1 resize-none overflow-hidden rounded-sm border-0 bg-transparent p-0 text-xs leading-4 outline-none select-text"
+        spellcheck="false"
+        data-outline-editor
+        @input="resizeEditor"
+        @keydown="onEditorKeydown"
+        @blur="commit"
+        @click.stop
+        @dblclick.stop
+      />
+      <span v-else class="truncate" :class="{ 'text-muted-foreground': !node.title }">
         {{ node.title || t('topic.untitled') }}
       </span>
     </div>
@@ -70,3 +138,11 @@ function toggle(event: MouseEvent) {
     />
   </div>
 </template>
+
+<style scoped>
+textarea {
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+</style>

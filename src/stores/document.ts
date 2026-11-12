@@ -40,6 +40,7 @@ export const useDocumentStore = defineStore('document', {
     doc: createDemoDocument(useUiStore().locale) as MindMapDocument,
     selectedNodeId: null as string | null,
     editingNodeId: null as string | null,
+    editingSource: 'canvas' as 'canvas' | 'outline',
     undoStack: [] as HistoryEntry[],
     redoStack: [] as HistoryEntry[],
     revision: 0,
@@ -115,9 +116,10 @@ export const useDocumentStore = defineStore('document', {
       this.selectedNodeId = null
       this.editingNodeId = null
     },
-    startEditing(id: string) {
+    startEditing(id: string, source: 'canvas' | 'outline' = 'canvas') {
       this.selectedNodeId = id
       this.editingNodeId = id
+      this.editingSource = source
     },
     stopEditing() {
       this.editingNodeId = null
@@ -135,6 +137,7 @@ export const useDocumentStore = defineStore('document', {
       if (inserted) {
         this.selectedNodeId = node.id
         this.editingNodeId = node.id
+        this.editingSource = 'canvas'
       }
     },
     addSiblingTo(nodeId?: string) {
@@ -155,6 +158,7 @@ export const useDocumentStore = defineStore('document', {
       if (inserted) {
         this.selectedNodeId = node.id
         this.editingNodeId = node.id
+        this.editingSource = 'canvas'
       }
     },
     remove(nodeId?: string) {
