@@ -44,6 +44,38 @@ test('edits a topic from the outline and syncs the canvas', async ({ page }) => 
   await expect(page.locator('[data-mindmap-canvas]').getByText('Outline Topic')).toBeVisible()
 })
 
+test('reorders outline entries by dragging and syncs the canvas', async ({ page }) => {
+  await page.locator('[data-toggle-outline]').click()
+  const panel = page.locator('[data-outline-panel]')
+  await expect(panel).toBeVisible()
+
+  const rows = panel.locator('[data-outline-node]')
+  const sourceId = await rows.nth(1).getAttribute('data-outline-node')
+  expect(sourceId).toBeTruthy()
+
+  const canvasNode = page.locator(`[data-node-id="${sourceId}"]`)
+  const before = await canvasNode.boundingBox()
+
+  const source = await rows.nth(1).boundingBox()
+  const target = await rows.nth(5).boundingBox()
+  if (!source || !target) throw new Error('missing outline row bounds')
+
+  await page.mouse.move(source.x + 60, source.y + source.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(source.x + 60, source.y + source.height / 2 + 12, { steps: 3 })
+  await page.mouse.move(target.x + 60, target.y + target.height - 2, { steps: 8 })
+
+  const indicator = panel.locator('[data-outline-drop]')
+  await expect(indicator).toHaveAttribute('data-outline-drop', 'after')
+  await page.mouse.up()
+
+  await expect(rows.nth(5)).toHaveAttribute('data-outline-node', sourceId)
+
+  const after = await canvasNode.boundingBox()
+  expect(after).not.toBeNull()
+  expect(after?.y).not.toBe(before?.y)
+})
+
 test('shows the empty state for a new document', async ({ page }) => {
   await page.locator('[data-file-new]').click()
   await expect(page.locator('[data-empty-state]')).toBeVisible()

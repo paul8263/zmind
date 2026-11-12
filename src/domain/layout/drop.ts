@@ -95,7 +95,7 @@ export function resolveDropTarget(
       : -1
   const index = oldIndex >= 0 && oldIndex < baseIndex ? baseIndex - 1 : baseIndex
 
-  if (oldIndex >= 0 && (index === oldIndex || index === oldIndex + 1)) {
+  if (oldIndex >= 0 && index === oldIndex) {
     return null
   }
 

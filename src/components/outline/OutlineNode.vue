@@ -9,6 +9,7 @@ import { useDocumentStore } from '@/stores/document'
 const props = defineProps<{
   node: TopicNode
   depth: number
+  draggingId?: string | null
 }>()
 
 const docStore = useDocumentStore()
@@ -89,11 +90,12 @@ function onEditorKeydown(event: KeyboardEvent) {
   <div>
     <div
       class="flex cursor-default items-center gap-1 rounded-md py-1 pr-2 text-xs select-none"
-      :class="
+      :class="[
         docStore.selectedNodeId === node.id
           ? 'bg-sky-100 text-sky-900 dark:bg-sky-500/25 dark:text-sky-50'
-          : 'hover:bg-accent'
-      "
+          : 'hover:bg-accent',
+        draggingId === node.id ? 'opacity-40' : '',
+      ]"
       :style="{ paddingLeft: `${depth * 14 + 6}px` }"
       :data-outline-node="node.id"
       @click="select"
@@ -135,6 +137,7 @@ function onEditorKeydown(event: KeyboardEvent) {
       :key="child.id"
       :node="child"
       :depth="depth + 1"
+      :dragging-id="draggingId"
     />
   </div>
 </template>

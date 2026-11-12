@@ -97,6 +97,19 @@ describe('drag drop resolution', () => {
     ).toBeNull()
   })
 
+  it('swaps adjacent siblings when dragging down', () => {
+    const { layout, root, a, b } = makeLayout()
+
+    expect(
+      resolveDropTarget(layout, a.id, b.x + b.width / 2, b.y + b.height - 1, 'logic-right'),
+    ).toEqual({
+      nodeId: b.id,
+      mode: 'after',
+      newParentId: root.id,
+      index: 1,
+    })
+  })
+
   it('uses horizontal edges for the vertical org chart layout', () => {
     const { layout, root, b, a1 } = makeLayout('org-down')
 
