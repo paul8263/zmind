@@ -20,8 +20,7 @@ playwright-report
 .openidea
 
 # Local planning docs
-PLAN.md
-MULTI_CANVAS_PLAN.md
+plan/
 
 # Runtime data (portable mode)
 data
