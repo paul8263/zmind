@@ -28,12 +28,15 @@ import {
 } from '@/domain/model/document'
 import { findNode, isDescendant } from '@/domain/model/tree'
 import type {
+  Marker,
+  MarkerType,
   MindMapSheet,
   MindMapWorkbook,
   NodeStyle,
   Structure,
   TopicNode,
 } from '@/domain/model/types'
+import { toggleMarkerInList } from '@/domain/markers/catalog'
 import { translate } from '@/i18n'
 
 import { useUiStore } from './ui'
@@ -313,6 +316,32 @@ export const useDocumentStore = defineStore('document', {
       this.mutate((draft) => {
         const node = findNode(draft.root, nodeId)
         if (node) delete node.style
+      })
+    },
+    toggleMarker(nodeId: string, marker: Marker) {
+      this.mutate((draft) => {
+        const node = findNode(draft.root, nodeId)
+        if (!node) return
+
+        const next = toggleMarkerInList(node.markers ?? [], marker)
+        if (next.length > 0) node.markers = next
+        else delete node.markers
+      })
+    },
+    removeMarker(nodeId: string, type: MarkerType) {
+      this.mutate((draft) => {
+        const node = findNode(draft.root, nodeId)
+        if (!node) return
+
+        const next = (node.markers ?? []).filter((marker) => marker.type !== type)
+        if (next.length > 0) node.markers = next
+        else delete node.markers
+      })
+    },
+    clearMarkers(nodeId: string) {
+      this.mutate((draft) => {
+        const node = findNode(draft.root, nodeId)
+        if (node?.markers?.length) delete node.markers
       })
     },
     defaultSheetTitle(index: number): string {

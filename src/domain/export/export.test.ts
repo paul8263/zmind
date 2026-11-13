@@ -13,6 +13,10 @@ function makeDocument() {
   doc.root.title = 'Root & <Center>'
   const child = createTopic('Child\nwith two lines')
   child.style = { shape: 'ellipse', lineStyle: 'dashed', lineWidth: 4 }
+  child.markers = [
+    { type: 'priority', color: 'red', value: '1' },
+    { type: 'progress', value: '50' },
+  ]
   child.children.push(createTopic('Grandchild'))
   doc.root.children.push(child)
   return doc
@@ -37,6 +41,9 @@ describe('SVG export', () => {
     expect(rendered.svg).toContain('Root &amp; &lt;Center&gt;')
     expect(rendered.svg).toContain('Child')
     expect(rendered.svg).toContain('Grandchild')
+    expect(rendered.svg).toContain('data-marker="priority|red|1"')
+    expect(rendered.svg).toContain('data-marker="progress||50"')
+    expect(rendered.svg).toContain('#22C55E')
   })
 
   it('uses the theme background and node colors', () => {
@@ -58,5 +65,13 @@ describe('Markdown export', () => {
     expect(markdown).toContain('- Child<br>with two lines')
     expect(markdown).toContain('  - Grandchild')
     expect(markdown.endsWith('\n')).toBe(true)
+  })
+
+  it('exports markers as readable text', () => {
+    const markdown = documentToMarkdown(makeDocument(), 'Untitled', (marker) =>
+      marker.type === 'priority' ? '优先级 1' : '进度 50%',
+    )
+
+    expect(markdown).toContain('- Child<br>with two lines  [优先级 1] [进度 50%]')
   })
 })

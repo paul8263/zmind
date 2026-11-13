@@ -270,3 +270,43 @@ describe('document store', () => {
     expect(store.sheets.map((sheet) => sheet.id)).toEqual([thirdId, firstId, secondId])
   })
 })
+
+describe('document markers', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('adds, replaces and removes markers per category', () => {
+    const store = useDocumentStore()
+    const nodeId = store.doc.root.id
+
+    store.toggleMarker(nodeId, { type: 'priority', color: 'red', value: '1' })
+    expect(store.doc.root.markers).toEqual([{ type: 'priority', color: 'red', value: '1' }])
+
+    store.toggleMarker(nodeId, { type: 'priority', color: 'blue', value: '2' })
+    expect(store.doc.root.markers).toEqual([{ type: 'priority', color: 'blue', value: '2' }])
+
+    store.toggleMarker(nodeId, { type: 'flag', color: 'red' })
+    expect(store.doc.root.markers).toHaveLength(2)
+
+    store.removeMarker(nodeId, 'flag')
+    expect(store.doc.root.markers).toEqual([{ type: 'priority', color: 'blue', value: '2' }])
+
+    store.clearMarkers(nodeId)
+    expect(store.doc.root.markers).toBeUndefined()
+  })
+
+  it('undoes and redoes marker changes', () => {
+    const store = useDocumentStore()
+    const nodeId = store.doc.root.id
+
+    store.toggleMarker(nodeId, { type: 'progress', value: '50' })
+    expect(store.doc.root.markers).toEqual([{ type: 'progress', value: '50' }])
+
+    store.undo()
+    expect(store.doc.root.markers).toBeUndefined()
+
+    store.redo()
+    expect(store.doc.root.markers).toEqual([{ type: 'progress', value: '50' }])
+  })
+})

@@ -43,6 +43,28 @@ describe('mind map workbook schema', () => {
     expect(workbook.activeSheetId).toBe(sheet.id)
   })
 
+  it('parses topic markers', () => {
+    const workbook = createBlankWorkbook()
+    workbook.sheets[0].root.markers = [
+      { type: 'priority', color: 'red', value: '1' },
+      { type: 'progress', value: '50' },
+    ]
+
+    const parsed = parseWorkbook(workbook)
+
+    expect(parsed.sheets[0].root.markers).toEqual([
+      { type: 'priority', color: 'red', value: '1' },
+      { type: 'progress', value: '50' },
+    ])
+  })
+
+  it('rejects markers with unknown colors', () => {
+    const workbook = createBlankWorkbook()
+    workbook.sheets[0].root.markers = [{ type: 'solid', color: 'pink' } as never]
+
+    expect(safeParseWorkbook(workbook).success).toBe(false)
+  })
+
   it('rejects invalid workbooks', () => {
     expect(safeParseWorkbook({}).success).toBe(false)
     expect(safeParseWorkbook({ schemaVersion: 3 }).success).toBe(false)

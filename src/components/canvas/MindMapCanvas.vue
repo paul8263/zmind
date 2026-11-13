@@ -8,6 +8,7 @@ import {
   Pencil,
   Plus,
   RotateCcw,
+  Tags,
   Trash2,
   X,
 } from '@lucide/vue'
@@ -175,6 +176,15 @@ const contextMenuItems = computed<ContextMenuItem[]>(() => {
       action: () => docStore.addSiblingTo(node.id),
     },
     {
+      id: 'markers',
+      label: t('context.markers'),
+      icon: Tags,
+      action: () => {
+        docStore.select(node.id)
+        uiStore.openMarkers()
+      },
+    },
+    {
       id: 'toggle',
       label: node.node.collapsed ? t('topic.expand') : t('topic.collapse'),
       shortcut: 'Space',
@@ -296,6 +306,8 @@ function nodeMemo(node: LayoutNode) {
     node.node.collapsed,
     node.node.children.length,
     node.node.style,
+    node.node.markers,
+    node.markerLayout,
     node.depth,
     node.x,
     node.y,

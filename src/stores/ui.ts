@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 
 import type { Locale } from '@/i18n/messages'
 
-export type InspectorTab = 'style' | 'theme'
+export type InspectorTab = 'style' | 'theme' | 'markers'
 
 const KEYS = {
   dark: 'zmind.ui.dark',
@@ -67,6 +67,10 @@ export const useUiStore = defineStore('ui', {
     },
     setInspectorTab(tab: InspectorTab) {
       this.inspectorTab = tab
+    },
+    openMarkers() {
+      this.inspectorOpen = true
+      this.inspectorTab = 'markers'
     },
     openOnboarding() {
       this.onboardingOpen = true

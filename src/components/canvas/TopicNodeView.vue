@@ -4,9 +4,11 @@ import { computed, type CSSProperties } from 'vue'
 
 import type { LayoutNode } from '@/domain/layout/logical'
 import { resolveNodeStyle } from '@/domain/layout/style'
+import { markerKey } from '@/domain/markers/catalog'
 import type { MindMapTheme } from '@/domain/theme'
 import { useI18n } from '@/i18n'
 
+import MarkerIcon from '../markers/MarkerIcon.vue'
 import NodeEditor from './NodeEditor.vue'
 
 const props = defineProps<{
@@ -31,6 +33,8 @@ const { t } = useI18n()
 
 const hasChildren = computed(() => props.node.node.children.length > 0)
 const isCollapsed = computed(() => props.node.node.collapsed)
+const markerRows = computed(() => props.node.markerLayout?.rows ?? [])
+const hasMarkers = computed(() => markerRows.value.length > 0)
 
 const resolved = computed(() =>
   resolveNodeStyle(props.node.depth, props.node.branchColor, props.node.node.style, props.theme),
@@ -65,8 +69,9 @@ const nodeStyle = computed<CSSProperties>(() => {
     border: hasBorder ? `${style.borderWidth}px solid ${style.borderColor}` : 'none',
     boxShadow: shadows.join(', '),
     textAlign: style.textAlign,
-    justifyContent:
-      style.textAlign === 'left'
+    justifyContent: hasMarkers.value
+      ? 'center'
+      : style.textAlign === 'left'
         ? 'flex-start'
         : style.textAlign === 'right'
           ? 'flex-end'
@@ -113,7 +118,7 @@ function handleContextMenu(event: MouseEvent) {
 <template>
   <div
     class="absolute flex cursor-grab items-center transition-shadow select-none active:cursor-grabbing"
-    :class="{ 'opacity-30': dragging }"
+    :class="{ 'opacity-30': dragging, 'flex-col': hasMarkers }"
     :style="nodeStyle"
     :data-node-id="node.id"
     :data-depth="node.depth"
@@ -121,12 +126,9 @@ function handleContextMenu(event: MouseEvent) {
     @dblclick.stop="emit('edit', node.id)"
     @contextmenu.stop="handleContextMenu"
   >
-    <NodeEditor
-      v-if="editing"
-      :title="node.node.title"
-      @commit="handleCommit"
-      @cancel="handleCancel"
-    />
+    <div v-if="editing" :class="hasMarkers ? 'flex min-h-0 w-full flex-1' : 'contents'">
+      <NodeEditor :title="node.node.title" @commit="handleCommit" @cancel="handleCancel" />
+    </div>
     <span
       v-else
       class="w-full break-words whitespace-pre-wrap"
@@ -134,6 +136,17 @@ function handleContextMenu(event: MouseEvent) {
     >
       {{ node.node.title || t('topic.untitled') }}
     </span>
+
+    <div v-if="hasMarkers" class="mt-1.5 flex flex-col items-center gap-1" data-node-markers>
+      <div v-for="(row, rowIndex) in markerRows" :key="rowIndex" class="flex items-center gap-1">
+        <MarkerIcon
+          v-for="item in row"
+          :key="markerKey(item.marker)"
+          :marker="item.marker"
+          :size="16"
+        />
+      </div>
+    </div>
 
     <button
       v-if="hasChildren"

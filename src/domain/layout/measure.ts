@@ -1,4 +1,5 @@
-import type { NodeStyle } from '@/domain/model/types'
+import type { Marker, NodeStyle } from '@/domain/model/types'
+import { MARKER_BLOCK_GAP, layoutMarkers, type MarkerLayout } from '@/domain/markers/layout'
 
 import { borderMetrics } from './border'
 import { getEffectiveFont, type NodeVisualStyle } from './style'
@@ -75,12 +76,14 @@ export interface MeasuredNodeSize {
   height: number
   lines: string[]
   visual: NodeVisualStyle
+  markerLayout: MarkerLayout | null
 }
 
 export function measureNodeSize(
   title: string,
   depth: number,
   nodeStyle?: NodeStyle,
+  markers?: Marker[],
 ): MeasuredNodeSize {
   const { fontSize, fontWeight, font, visual } = getEffectiveFont(depth, nodeStyle)
   const effectiveVisual: NodeVisualStyle = { ...visual, fontSize, fontWeight }
@@ -90,14 +93,17 @@ export function measureNodeSize(
   )
   const contentMaxWidth = visual.maxWidth - visual.paddingX * 2 - borders.horizontal
   const lines = wrapText(title, contentMaxWidth, font)
-  const contentWidth = lines.reduce((max, line) => Math.max(max, measureTextWidth(line, font)), 0)
+  const textWidth = lines.reduce((max, line) => Math.max(max, measureTextWidth(line, font)), 0)
+  const markerLayout = layoutMarkers(markers ?? [], contentMaxWidth)
+  const markerBlockHeight = markerLayout ? MARKER_BLOCK_GAP + markerLayout.height : 0
+  const contentWidth = Math.max(textWidth, markerLayout?.width ?? 0)
   const width = Math.min(
     visual.maxWidth,
     Math.max(visual.minWidth, contentWidth + visual.paddingX * 2 + borders.horizontal),
   )
   const lineHeight = Math.round(fontSize * 1.45)
   const height = Math.max(
-    lines.length * lineHeight + visual.paddingY * 2 + borders.vertical,
+    lines.length * lineHeight + markerBlockHeight + visual.paddingY * 2 + borders.vertical,
     fontSize + visual.paddingY * 2 + borders.vertical,
   )
 
@@ -106,5 +112,6 @@ export function measureNodeSize(
     height: Math.ceil(height),
     lines,
     visual: effectiveVisual,
+    markerLayout,
   }
 }

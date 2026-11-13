@@ -5,6 +5,7 @@ import { ExportTooLargeError, svgToPngBlob } from '@/domain/export/raster'
 import { renderDocumentSvg } from '@/domain/export/svg'
 import { parseMarkdown } from '@/domain/import/markdown'
 import { parseOpml } from '@/domain/import/opml'
+import { markerLabel } from '@/domain/markers/labels'
 import type { MindMapSheet } from '@/domain/model/types'
 import { translate } from '@/i18n'
 import type { MessageKey } from '@/i18n/messages'
@@ -172,9 +173,11 @@ export const useExportStore = defineStore('export', {
       await yieldToUi()
 
       try {
+        const locale = useUiStore().locale
         const markdown = documentToMarkdown(
           useDocumentStore().doc,
-          translate(useUiStore().locale, 'topic.untitled'),
+          translate(locale, 'topic.untitled'),
+          (marker) => markerLabel(marker, (key, params) => translate(locale, key, params)),
         )
         const bytes = new TextEncoder().encode(markdown)
         await writeExportFile(finalPath, Array.from(bytes))

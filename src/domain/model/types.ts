@@ -21,8 +21,24 @@ export interface NodeStyle {
   shape?: NodeShape
 }
 
+export type MarkerType = 'solid' | 'priority' | 'progress' | 'flag' | 'star' | 'portrait' | 'symbol'
+
+export type MarkerColor = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'gray'
+
+export type MarkerSymbol =
+  | 'heart'
+  | 'thumb-up'
+  | 'thumb-down'
+  | 'bolt'
+  | 'hourglass'
+  | 'check'
+  | 'cross'
+  | 'question'
+  | 'exclamation'
+
 export interface Marker {
-  type: string
+  type: MarkerType
+  color?: MarkerColor
   value?: string
 }
 

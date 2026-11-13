@@ -4,15 +4,17 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { layoutDocument } from '@/domain/layout/logical'
 import { createBlankSheet, createTopic } from '@/domain/model/document'
+import type { Marker } from '@/domain/model/types'
 import { resolveTheme } from '@/domain/theme'
 
 import TopicNodeView from './TopicNodeView.vue'
 
-function thirdLevelNode(shape?: 'underline') {
+function thirdLevelNode(shape?: 'underline', markers?: Marker[]) {
   const doc = createBlankSheet()
   const child = createTopic('Child')
   const grandchild = createTopic('Tab 创建子主题')
   if (shape) grandchild.style = { shape }
+  if (markers) grandchild.markers = markers
   child.children.push(grandchild)
   doc.root.children.push(child)
 
@@ -60,6 +62,25 @@ describe('TopicNodeView', () => {
     const element = wrapper.element as HTMLElement
     expect(element.style.borderTopStyle).toBe('none')
     expect(element.style.borderBottomWidth).toBe('2px')
+  })
+
+  it('renders markers inside the topic', () => {
+    const node = thirdLevelNode(undefined, [
+      { type: 'solid', color: 'red' },
+      { type: 'priority', color: 'blue', value: '2' },
+    ])
+    const wrapper = mount(TopicNodeView, {
+      props: {
+        node,
+        selected: false,
+        editing: false,
+        theme: resolveTheme('classic'),
+      },
+      global: { plugins: [pinia] },
+    })
+
+    expect(wrapper.find('[data-node-markers]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-marker-icon]')).toHaveLength(2)
   })
 
   it('emits a context menu request for the node', async () => {

@@ -1,4 +1,5 @@
 import type { MindMapSheet, Structure, TopicNode } from '@/domain/model/types'
+import type { MarkerLayout } from '@/domain/markers/layout'
 import { CLASSIC_THEME, type MindMapTheme } from '@/domain/theme'
 
 import { measureNodeSize } from './measure'
@@ -28,6 +29,7 @@ export interface LayoutNode {
   children: LayoutNode[]
   branchColor: string
   visual: NodeVisualStyle
+  markerLayout: MarkerLayout | null
 }
 
 export interface Connection {
@@ -59,6 +61,7 @@ interface MeasuredNode {
   subtreeHeight: number
   visual: NodeVisualStyle
   children: MeasuredNode[]
+  markerLayout: MarkerLayout | null
 }
 
 function childrenBlockHeight(children: MeasuredNode[]): number {
@@ -76,7 +79,7 @@ function childrenBlockWidth(children: MeasuredNode[]): number {
 }
 
 function measureSubtree(node: TopicNode, depth: number, orientation: Orientation): MeasuredNode {
-  const size = measureNodeSize(node.title, depth, node.style)
+  const size = measureNodeSize(node.title, depth, node.style, node.markers)
   const children = node.collapsed
     ? []
     : node.children.map((child) => measureSubtree(child, depth + 1, orientation))
@@ -92,6 +95,7 @@ function measureSubtree(node: TopicNode, depth: number, orientation: Orientation
       width: size.width,
       height: size.height,
       visual: size.visual,
+      markerLayout: size.markerLayout,
       subtreeWidth: Math.max(size.width, blockWidth),
       subtreeHeight: size.height + (children.length ? ORG_V_GAP + maxChildHeight : 0),
       children,
@@ -108,6 +112,7 @@ function measureSubtree(node: TopicNode, depth: number, orientation: Orientation
     width: size.width,
     height: size.height,
     visual: size.visual,
+    markerLayout: size.markerLayout,
     subtreeWidth: size.width + (children.length ? H_GAP + maxChildWidth : 0),
     subtreeHeight: Math.max(size.height, blockHeight),
     children,
@@ -134,6 +139,7 @@ function createLayoutNode(
     children: [],
     branchColor,
     visual: measured.visual,
+    markerLayout: measured.markerLayout,
   }
 }
 

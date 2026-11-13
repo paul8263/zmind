@@ -9,6 +9,7 @@ import {
   IndentIncrease,
   ListPlus,
   Pencil,
+  Tags,
   Trash2,
   X,
 } from '@lucide/vue'
@@ -108,6 +109,15 @@ const contextMenuItems = computed<ContextMenuItem[]>(() => {
       icon: ListPlus,
       disabled: isRoot,
       action: () => docStore.addSiblingTo(node.id, 'outline'),
+    },
+    {
+      id: 'markers',
+      label: t('context.markers'),
+      icon: Tags,
+      action: () => {
+        docStore.select(node.id)
+        uiStore.openMarkers()
+      },
     },
     {
       id: 'move-up',

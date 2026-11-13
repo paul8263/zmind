@@ -6,6 +6,7 @@ import { useI18n } from '@/i18n'
 import { useDocumentStore } from '@/stores/document'
 import { useUiStore } from '@/stores/ui'
 
+import MarkerPanel from './MarkerPanel.vue'
 import StylePanel from './StylePanel.vue'
 import ThemePanel from './ThemePanel.vue'
 
@@ -16,6 +17,7 @@ const { t } = useI18n()
 const tabs = [
   { value: 'style', labelKey: 'inspector.style' },
   { value: 'theme', labelKey: 'inspector.theme' },
+  { value: 'markers', labelKey: 'inspector.markers' },
 ] as const
 </script>
 
@@ -58,7 +60,7 @@ const tabs = [
     </div>
 
     <div
-      v-if="uiStore.inspectorTab === 'style' && docStore.selectedNode"
+      v-if="uiStore.inspectorTab !== 'theme' && docStore.selectedNode"
       class="shrink-0 truncate border-b border-border px-3 py-1.5 text-[11px] text-muted-foreground"
     >
       {{ docStore.selectedNode.title || t('topic.untitled') }}
@@ -66,6 +68,7 @@ const tabs = [
 
     <div class="min-h-0 flex-1 overflow-auto">
       <StylePanel v-if="uiStore.inspectorTab === 'style'" />
+      <MarkerPanel v-else-if="uiStore.inspectorTab === 'markers'" />
       <ThemePanel v-else />
     </div>
   </aside>

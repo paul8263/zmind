@@ -2,6 +2,9 @@
 
 import { describe, expect, it } from 'vitest'
 
+import { MARKER_BLOCK_GAP, MARKER_SIZE } from '@/domain/markers/layout'
+import type { Marker } from '@/domain/model/types'
+
 import { measureNodeSize } from './measure'
 
 describe('node measurement', () => {
@@ -23,5 +26,14 @@ describe('node measurement', () => {
     const measured = measureNodeSize('Tab 创建子主题', 2, { shape: 'underline' })
 
     expect(measured.height).toBe(37)
+  })
+
+  it('adds space for a marker row', () => {
+    const markers: Marker[] = [{ type: 'solid', color: 'red' }]
+    const base = measureNodeSize('Tab 创建子主题', 2)
+    const measured = measureNodeSize('Tab 创建子主题', 2, undefined, markers)
+
+    expect(measured.height - base.height).toBe(MARKER_BLOCK_GAP + MARKER_SIZE)
+    expect(measured.markerLayout?.rows).toHaveLength(1)
   })
 })

@@ -23,8 +23,21 @@ export const nodeStyleSchema = z.object({
   shape: nodeShapeSchema.optional(),
 })
 
+const markerTypeSchema = z.enum([
+  'solid',
+  'priority',
+  'progress',
+  'flag',
+  'star',
+  'portrait',
+  'symbol',
+])
+
+const markerColorSchema = z.enum(['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'])
+
 const markerSchema = z.object({
-  type: z.string(),
+  type: markerTypeSchema,
+  color: markerColorSchema.optional(),
   value: z.string().optional(),
 })
 
