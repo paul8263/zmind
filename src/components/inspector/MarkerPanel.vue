@@ -1,29 +1,23 @@
 <script setup lang="ts">
 import { X } from '@lucide/vue'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 import MarkerIcon from '@/components/markers/MarkerIcon.vue'
-import {
-  MARKER_COLORS,
-  MARKER_TYPES,
-  markerKey,
-  markersForCategory,
-} from '@/domain/markers/catalog'
+import { MARKER_TYPES, markerKey, markersForType } from '@/domain/markers/catalog'
 import { markerLabel } from '@/domain/markers/labels'
-import type { Marker, MarkerColor, MarkerType } from '@/domain/model/types'
+import type { Marker, MarkerType } from '@/domain/model/types'
 import { useI18n } from '@/i18n'
 import { useDocumentStore } from '@/stores/document'
 
 const docStore = useDocumentStore()
 const { t } = useI18n()
 
-const activeType = ref<MarkerType>('solid')
-const activeColor = ref<MarkerColor>('red')
-
 const selected = computed(() => docStore.selectedNode)
 const selectedMarkers = computed(() => selected.value?.markers ?? [])
-const options = computed(() => markersForCategory(activeType.value, activeColor.value))
-const showColors = computed(() => activeType.value !== 'progress')
+
+function optionsFor(type: MarkerType): Marker[] {
+  return markersForType(type)
+}
 
 function isActive(marker: Marker): boolean {
   const key = markerKey(marker)
@@ -66,61 +60,36 @@ function label(marker: Marker): string {
         </span>
       </div>
 
-      <div class="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" data-marker-categories>
-        <button
-          v-for="type in MARKER_TYPES"
-          :key="type"
-          type="button"
-          class="shrink-0 rounded-md border px-2 py-1 text-[11px] transition-colors"
-          :class="
-            activeType === type
-              ? 'border-sky-400 bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-200'
-              : 'border-border text-muted-foreground hover:bg-accent hover:text-foreground'
-          "
-          :data-marker-category="type"
-          @click="activeType = type"
-        >
+      <section
+        v-for="type in MARKER_TYPES"
+        :key="type"
+        class="space-y-2 border-b border-border pb-3 last:border-b-0 last:pb-0"
+        :data-marker-section="type"
+      >
+        <h3 class="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
           {{ t(`markers.category.${type}`) }}
-        </button>
-      </div>
-
-      <div v-if="showColors" class="flex items-center justify-between gap-1" data-marker-colors>
-        <button
-          v-for="color in MARKER_COLORS"
-          :key="color.value"
-          type="button"
-          class="size-5 rounded-full border border-black/10 transition-transform hover:scale-110"
-          :class="{
-            'ring-2 ring-sky-400 ring-offset-2 ring-offset-card': activeColor === color.value,
-          }"
-          :style="{ backgroundColor: color.hex }"
-          :title="t(color.labelKey)"
-          :aria-label="t(color.labelKey)"
-          :data-marker-color="color.value"
-          @click="activeColor = color.value"
-        />
-      </div>
-
-      <div class="grid grid-cols-6 gap-1.5" data-marker-options>
-        <button
-          v-for="marker in options"
-          :key="markerKey(marker)"
-          type="button"
-          class="flex size-9 items-center justify-center rounded-md border transition-colors"
-          :class="
-            isActive(marker)
-              ? 'border-sky-400 bg-sky-50 dark:bg-sky-500/20'
-              : 'border-transparent hover:bg-accent'
-          "
-          :title="label(marker)"
-          :aria-label="label(marker)"
-          :aria-pressed="isActive(marker)"
-          :data-marker-option="markerKey(marker)"
-          @click="toggle(marker)"
-        >
-          <MarkerIcon :marker="marker" :size="24" />
-        </button>
-      </div>
+        </h3>
+        <div class="grid grid-cols-7 gap-1">
+          <button
+            v-for="marker in optionsFor(type)"
+            :key="markerKey(marker)"
+            type="button"
+            class="flex size-8 items-center justify-center rounded-md border transition-colors"
+            :class="
+              isActive(marker)
+                ? 'border-sky-400 bg-sky-50 dark:bg-sky-500/20'
+                : 'border-transparent hover:bg-accent'
+            "
+            :title="label(marker)"
+            :aria-label="label(marker)"
+            :aria-pressed="isActive(marker)"
+            :data-marker-option="markerKey(marker)"
+            @click="toggle(marker)"
+          >
+            <MarkerIcon :marker="marker" :size="20" />
+          </button>
+        </div>
+      </section>
 
       <section v-if="selectedMarkers.length > 0" class="space-y-2" data-marker-selected>
         <h3 class="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">

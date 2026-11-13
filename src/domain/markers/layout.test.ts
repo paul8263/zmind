@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { Marker } from '@/domain/model/types'
 
-import { MARKER_GAP, MARKER_ROW_GAP, MARKER_SIZE, layoutMarkers } from './layout'
+import { MARKER_GAP, MARKER_SIZE, layoutMarkerRow } from './layout'
 
 const markers: Marker[] = [
   { type: 'solid', color: 'red' },
@@ -13,11 +13,11 @@ const markers: Marker[] = [
 
 describe('marker layout', () => {
   it('returns null for topics without markers', () => {
-    expect(layoutMarkers([], 200)).toBeNull()
+    expect(layoutMarkerRow([])).toBeNull()
   })
 
   it('lays out a single marker', () => {
-    const layout = layoutMarkers([{ type: 'star', color: 'yellow' }], 200)
+    const layout = layoutMarkerRow([{ type: 'star', color: 'yellow' }])
 
     expect(layout).not.toBeNull()
     expect(layout?.width).toBe(MARKER_SIZE)
@@ -25,13 +25,24 @@ describe('marker layout', () => {
     expect(layout?.rows[0][0]).toMatchObject({ x: 0, y: 0 })
   })
 
-  it('wraps markers into rows when the available width is small', () => {
-    const layout = layoutMarkers(markers, MARKER_SIZE * 2 + MARKER_GAP)
+  it('keeps all markers in a single horizontal row', () => {
+    const layout = layoutMarkerRow(markers)
 
-    expect(layout?.rows).toHaveLength(2)
-    expect(layout?.height).toBe(MARKER_SIZE * 2 + MARKER_ROW_GAP)
-    expect(layout?.rows[0]).toHaveLength(2)
-    expect(layout?.rows[1]).toHaveLength(2)
-    expect(layout?.rows[1][0].y).toBe(MARKER_SIZE + MARKER_ROW_GAP)
+    expect(layout?.rows).toHaveLength(1)
+    expect(layout?.rows[0]).toHaveLength(markers.length)
+    expect(layout?.height).toBe(MARKER_SIZE)
+    expect(layout?.width).toBe(markers.length * MARKER_SIZE + (markers.length - 1) * MARKER_GAP)
+    expect(layout?.rows[0].map((item) => item.x)).toEqual([0, 20, 40, 60])
+  })
+
+  it('sorts markers by category, color and value', () => {
+    const layout = layoutMarkerRow([...markers].reverse())
+
+    expect(layout?.rows[0].map((item) => item.marker)).toEqual([
+      { type: 'solid', color: 'red' },
+      { type: 'priority', color: 'orange', value: '1' },
+      { type: 'progress', value: '50' },
+      { type: 'flag', color: 'blue' },
+    ])
   })
 })

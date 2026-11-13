@@ -33,11 +33,15 @@ const { t } = useI18n()
 
 const hasChildren = computed(() => props.node.node.children.length > 0)
 const isCollapsed = computed(() => props.node.node.collapsed)
-const markerRows = computed(() => props.node.markerLayout?.rows ?? [])
-const hasMarkers = computed(() => markerRows.value.length > 0)
+const markerItems = computed(() => props.node.markerLayout?.rows.flat() ?? [])
+const hasMarkers = computed(() => markerItems.value.length > 0)
 
 const resolved = computed(() =>
   resolveNodeStyle(props.node.depth, props.node.branchColor, props.node.node.style, props.theme),
+)
+
+const markerOffsetY = computed(() =>
+  Math.max(0, (Math.round(resolved.value.fontSize * resolved.value.lineHeight) - 16) / 2),
 )
 
 const nodeStyle = computed<CSSProperties>(() => {
@@ -70,7 +74,7 @@ const nodeStyle = computed<CSSProperties>(() => {
     boxShadow: shadows.join(', '),
     textAlign: style.textAlign,
     justifyContent: hasMarkers.value
-      ? 'center'
+      ? 'flex-start'
       : style.textAlign === 'left'
         ? 'flex-start'
         : style.textAlign === 'right'
@@ -118,7 +122,7 @@ function handleContextMenu(event: MouseEvent) {
 <template>
   <div
     class="absolute flex cursor-grab items-center transition-shadow select-none active:cursor-grabbing"
-    :class="{ 'opacity-30': dragging, 'flex-col': hasMarkers }"
+    :class="{ 'opacity-30': dragging }"
     :style="nodeStyle"
     :data-node-id="node.id"
     :data-depth="node.depth"
@@ -126,27 +130,33 @@ function handleContextMenu(event: MouseEvent) {
     @dblclick.stop="emit('edit', node.id)"
     @contextmenu.stop="handleContextMenu"
   >
-    <div v-if="editing" :class="hasMarkers ? 'flex min-h-0 w-full flex-1' : 'contents'">
+    <div
+      v-if="hasMarkers"
+      class="mr-1.5 flex shrink-0 items-center gap-1 self-start"
+      :style="{ marginTop: `${markerOffsetY}px` }"
+      data-node-markers
+    >
+      <MarkerIcon
+        v-for="item in markerItems"
+        :key="markerKey(item.marker)"
+        :marker="item.marker"
+        :size="16"
+      />
+    </div>
+
+    <div
+      v-if="editing"
+      :class="hasMarkers ? 'flex min-w-0 flex-1 items-center self-stretch' : 'contents'"
+    >
       <NodeEditor :title="node.node.title" @commit="handleCommit" @cancel="handleCancel" />
     </div>
     <span
       v-else
-      class="w-full break-words whitespace-pre-wrap"
+      class="min-w-0 flex-1 break-words whitespace-pre-wrap"
       :class="{ 'opacity-50': !node.node.title }"
     >
       {{ node.node.title || t('topic.untitled') }}
     </span>
-
-    <div v-if="hasMarkers" class="mt-1.5 flex flex-col items-center gap-1" data-node-markers>
-      <div v-for="(row, rowIndex) in markerRows" :key="rowIndex" class="flex items-center gap-1">
-        <MarkerIcon
-          v-for="item in row"
-          :key="markerKey(item.marker)"
-          :marker="item.marker"
-          :size="16"
-        />
-      </div>
-    </div>
 
     <button
       v-if="hasChildren"

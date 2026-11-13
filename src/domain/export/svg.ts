@@ -2,7 +2,7 @@ import { layoutDocument } from '@/domain/layout/logical'
 import { borderMetrics } from '@/domain/layout/border'
 import { measureNodeSize } from '@/domain/layout/measure'
 import { FONT_FAMILY, resolveNodeStyle } from '@/domain/layout/style'
-import { MARKER_BLOCK_GAP, MARKER_SIZE, markerRowWidth } from '@/domain/markers/layout'
+import { MARKER_SIZE, MARKER_TEXT_GAP } from '@/domain/markers/layout'
 import { renderMarkerSvg } from '@/domain/markers/render'
 import type { MindMapSheet } from '@/domain/model/types'
 import type { MindMapTheme } from '@/domain/theme'
@@ -60,13 +60,18 @@ export function renderDocumentSvg(
       const lineHeight = Math.round(style.fontSize * style.lineHeight)
       const contentX = node.x + borders.full + style.paddingX
       const contentWidth = node.width - style.paddingX * 2 - borders.horizontal
-      const textHeight = lines.length * lineHeight
       const markerLayout = node.markerLayout
-      const contentHeight = textHeight + (markerLayout ? MARKER_BLOCK_GAP + markerLayout.height : 0)
+      const markerWidth = markerLayout?.width ?? 0
+      const markerGap = markerLayout ? MARKER_TEXT_GAP : 0
+      const textStartX = contentX + markerWidth + markerGap
+      const textWidth = contentWidth - markerWidth - markerGap
+      const textHeight = lines.length * lineHeight
+      const contentHeight = Math.max(textHeight, markerLayout?.height ?? 0)
       const contentBoxHeight = node.height - borders.full * 2 - borders.bottom
       const contentTop = node.y + borders.full + (contentBoxHeight - contentHeight) / 2
-      const startY = contentTop + lineHeight / 2
-      const markerTop = contentTop + textHeight + (markerLayout ? MARKER_BLOCK_GAP : 0)
+      const textTop = contentTop + (contentHeight - textHeight) / 2
+      const startY = textTop + lineHeight / 2
+      const markerTop = textTop + Math.max(0, (lineHeight - MARKER_SIZE) / 2)
       const hasBorder =
         style.borderWidth > 0 &&
         (style.shape === 'rounded' || style.shape === 'rect' || style.shape === 'ellipse')
@@ -92,10 +97,10 @@ export function renderDocumentSvg(
         style.textAlign === 'left' ? 'start' : style.textAlign === 'right' ? 'end' : 'middle'
       const textX =
         style.textAlign === 'left'
-          ? contentX
+          ? textStartX
           : style.textAlign === 'right'
-            ? contentX + contentWidth
-            : node.x + node.width / 2
+            ? textStartX + textWidth
+            : textStartX + textWidth / 2
 
       const text = lines
         .map((line, index) => {
@@ -105,15 +110,8 @@ export function renderDocumentSvg(
         .join('')
 
       const markers = markerLayout
-        ? markerLayout.rows
-            .map((row) => {
-              const offsetX = contentX + Math.max(0, (contentWidth - markerRowWidth(row)) / 2)
-              return row
-                .map((item) =>
-                  renderMarkerSvg(item.marker, offsetX + item.x, markerTop + item.y, MARKER_SIZE),
-                )
-                .join('')
-            })
+        ? markerLayout.rows[0]
+            .map((item) => renderMarkerSvg(item.marker, contentX + item.x, markerTop, MARKER_SIZE))
             .join('')
         : ''
 

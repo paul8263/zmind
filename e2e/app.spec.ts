@@ -293,6 +293,33 @@ test('reorders sheets by dragging', async ({ page }) => {
   await expect(tabs.nth(0)).toHaveAttribute('data-sheet-tab', thirdId)
 })
 
+test('adds markers in front of the topic text from vertical sections', async ({ page }) => {
+  await page.locator('[data-toggle-inspector]').click()
+  await page.locator('[data-inspector-tab="markers"]').click()
+
+  const panel = page.locator('[data-marker-panel]')
+  await expect(panel.locator('[data-marker-section]')).toHaveCount(7)
+  await expect(panel.locator('[data-marker-section="star"] [data-marker-option]')).toHaveCount(7)
+  await expect(panel.locator('[role="tab"]')).toHaveCount(0)
+
+  const node = page.locator('[data-node-id][data-depth="2"]').first()
+  await node.click()
+  const before = await node.boundingBox()
+
+  await panel.locator('[data-marker-option="star|red|"]').click()
+
+  const markers = node.locator('[data-node-markers]')
+  await expect(markers.locator('[data-marker-icon]')).toHaveCount(1)
+
+  const after = await node.boundingBox()
+  expect(after?.width).toBeGreaterThan(before?.width ?? 0)
+  expect(after?.height).toBe(before?.height)
+
+  const markerBox = await markers.boundingBox()
+  const textBox = await node.locator('span').first().boundingBox()
+  expect(markerBox?.x).toBeLessThan(textBox?.x ?? 0)
+})
+
 test('captures unexpected errors in the error overlay', async ({ page }) => {
   await page.evaluate(() => {
     setTimeout(() => {

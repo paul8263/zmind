@@ -8,7 +8,7 @@ import {
   PROGRESS_VALUES,
   markerKey,
   markerVisual,
-  markersForCategory,
+  markersForType,
   sortMarkers,
   toggleMarkerInList,
 } from './catalog'
@@ -19,14 +19,27 @@ describe('marker catalog', () => {
     expect(MARKER_COLORS).toHaveLength(7)
   })
 
-  it('builds options for each category', () => {
-    expect(markersForCategory('solid', 'red')).toHaveLength(1)
-    expect(markersForCategory('priority', 'red')).toHaveLength(9)
-    expect(markersForCategory('progress', 'red')).toHaveLength(7)
-    expect(markersForCategory('flag', 'red')).toHaveLength(1)
-    expect(markersForCategory('star', 'red')).toHaveLength(1)
-    expect(markersForCategory('portrait', 'red')).toHaveLength(1)
-    expect(markersForCategory('symbol', 'red')).toHaveLength(9)
+  it('lists every color variant for each category', () => {
+    expect(markersForType('solid')).toHaveLength(7)
+    expect(markersForType('priority')).toHaveLength(63)
+    expect(markersForType('progress')).toHaveLength(7)
+    expect(markersForType('flag')).toHaveLength(7)
+    expect(markersForType('star')).toHaveLength(7)
+    expect(markersForType('portrait')).toHaveLength(7)
+    expect(markersForType('symbol')).toHaveLength(63)
+  })
+
+  it('exposes color variants directly without a separate color step', () => {
+    expect(markersForType('star').map((marker) => marker.color)).toEqual([
+      'red',
+      'orange',
+      'yellow',
+      'green',
+      'blue',
+      'purple',
+      'gray',
+    ])
+    expect(markersForType('progress').every((marker) => marker.color === undefined)).toBe(true)
   })
 
   it('toggles, replaces and removes markers within a category', () => {

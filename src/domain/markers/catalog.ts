@@ -158,12 +158,19 @@ export function toggleMarkerInList(markers: Marker[], marker: Marker): Marker[] 
   return sortMarkers(next)
 }
 
-export function markersForCategory(type: MarkerType, color: MarkerColor): Marker[] {
-  if (type === 'solid') return [{ type, color }]
-  if (type === 'priority') return PRIORITY_VALUES.map((value) => ({ type, color, value }))
+export function markersForType(type: MarkerType): Marker[] {
   if (type === 'progress') return PROGRESS_VALUES.map((value) => ({ type, value }))
-  if (type === 'flag' || type === 'star' || type === 'portrait') return [{ type, color }]
-  return SYMBOL_VALUES.map((value) => ({ type, color, value }))
+  if (type === 'priority') {
+    return PRIORITY_VALUES.flatMap((value) =>
+      MARKER_COLORS.map((color) => ({ type, color: color.value, value })),
+    )
+  }
+  if (type === 'symbol') {
+    return SYMBOL_VALUES.flatMap((value) =>
+      MARKER_COLORS.map((color) => ({ type, color: color.value, value })),
+    )
+  }
+  return MARKER_COLORS.map((color) => ({ type, color: color.value }))
 }
 
 function round(value: number): number {

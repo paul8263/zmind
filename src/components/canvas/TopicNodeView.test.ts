@@ -83,6 +83,31 @@ describe('TopicNodeView', () => {
     expect(wrapper.findAll('[data-marker-icon]')).toHaveLength(2)
   })
 
+  it('places markers before the topic text', () => {
+    const node = thirdLevelNode(undefined, [{ type: 'solid', color: 'red' }])
+    const wrapper = mount(TopicNodeView, {
+      props: {
+        node,
+        selected: false,
+        editing: false,
+        theme: resolveTheme('classic'),
+      },
+      global: { plugins: [pinia] },
+    })
+
+    const container = wrapper.element as HTMLElement
+    const markerGroup = container.querySelector('[data-node-markers]')
+    const text = Array.from(container.children).find((child) => child.tagName === 'SPAN')
+
+    expect(markerGroup).not.toBeNull()
+    expect(text).toBeDefined()
+    if (!markerGroup || !text) throw new Error('missing marker group or topic text')
+
+    expect(markerGroup.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+  })
+
   it('emits a context menu request for the node', async () => {
     const node = thirdLevelNode()
     const wrapper = mount(TopicNodeView, {
