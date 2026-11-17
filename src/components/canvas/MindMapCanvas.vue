@@ -987,7 +987,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     ref="containerRef"
-    class="relative h-full w-full overflow-hidden outline-none"
+    class="relative h-full w-full overflow-hidden outline-none select-none"
     :class="{ 'cursor-grabbing': drag?.active }"
     :style="{ backgroundColor: theme.canvasBg }"
     data-mindmap-canvas
@@ -1098,7 +1098,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div
-      class="absolute right-4 bottom-4 flex items-center gap-1 rounded-lg border border-border bg-card/90 p-1 text-card-foreground shadow-sm backdrop-blur"
+      class="absolute right-4 bottom-4 flex items-center gap-1 rounded-lg border border-border bg-card/90 p-1 text-card-foreground shadow-sm select-none backdrop-blur"
       @pointerdown.stop="closeContextMenu"
     >
       <Button variant="ghost" size="icon-sm" :aria-label="t('canvas.zoomOut')" @click="zoomOut">
@@ -1130,7 +1130,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div
-      class="pointer-events-none absolute bottom-4 left-4 rounded-md bg-card/80 px-2.5 py-1.5 text-[11px] text-muted-foreground shadow-sm backdrop-blur"
+      class="pointer-events-none absolute bottom-4 left-4 rounded-md bg-card/80 px-2.5 py-1.5 text-[11px] text-muted-foreground shadow-sm select-none backdrop-blur"
     >
       {{ t('canvas.hint') }}
     </div>

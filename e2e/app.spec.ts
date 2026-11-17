@@ -225,6 +225,26 @@ test('culls offscreen nodes when zoomed in', async ({ page }) => {
     .toBeLessThan(13)
 })
 
+test('keeps overlay labels unselected while panning the canvas', async ({ page }) => {
+  const canvas = page.locator('[data-mindmap-canvas]')
+  const hint = canvas.getByText('Tab 子主题')
+  const zoomLabel = canvas.locator('button[title="重置为 100%"]')
+  await expect(hint).toBeVisible()
+  await expect(zoomLabel).toBeVisible()
+
+  const canvasBox = (await canvas.boundingBox())!
+  const hintBox = (await hint.boundingBox())!
+  const zoomBox = (await zoomLabel.boundingBox())!
+
+  await page.mouse.move(canvasBox.x + 24, canvasBox.y + canvasBox.height - 80)
+  await page.mouse.down()
+  await page.mouse.move(hintBox.x + hintBox.width / 2, hintBox.y + hintBox.height / 2, { steps: 6 })
+  await page.mouse.move(zoomBox.x + zoomBox.width / 2, zoomBox.y + zoomBox.height / 2, { steps: 6 })
+  await page.mouse.up()
+
+  expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('')
+})
+
 test('switches themes without stale node styles', async ({ page }) => {
   await page.locator('[data-toggle-inspector]').click()
   await page.locator('[data-inspector-tab="theme"]').click()
