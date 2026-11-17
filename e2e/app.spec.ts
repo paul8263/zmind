@@ -385,6 +385,46 @@ test('previews the drop position and reflows nodes while dragging', async ({ pag
   expect(Math.abs((droppedBox?.y ?? 0) - placeholderBox.y)).toBeLessThan(2)
 })
 
+test('previews a drop between two sibling nodes', async ({ page }) => {
+  const source = page
+    .locator('[data-node-id][data-depth="2"]')
+    .filter({ hasText: 'Ctrl + 滚轮缩放' })
+  const first = page.locator('[data-node-id][data-depth="1"]').filter({ hasText: '快速记录' })
+  const second = page.locator('[data-node-id][data-depth="1"]').filter({ hasText: '自动布局' })
+  const sourceId = await source.getAttribute('data-node-id')
+  const sourceBox = await source.boundingBox()
+  const firstBox = await first.boundingBox()
+  const secondBox = await second.boundingBox()
+  if (!sourceId || !sourceBox || !firstBox || !secondBox) throw new Error('missing drag bounds')
+
+  const gapX = firstBox.x + firstBox.width / 2
+  const gapY = (firstBox.y + firstBox.height + secondBox.y) / 2
+
+  await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(
+    sourceBox.x + sourceBox.width / 2 + 10,
+    sourceBox.y + sourceBox.height / 2,
+    {
+      steps: 3,
+    },
+  )
+  await page.mouse.move(gapX, gapY, { steps: 10 })
+
+  const placeholder = page.locator('[data-drag-placeholder]')
+  await expect(placeholder).toBeVisible()
+  const placeholderBox = await placeholder.boundingBox()
+  if (!placeholderBox) throw new Error('missing drop placeholder')
+
+  await page.mouse.up()
+
+  await expect(page.locator('[data-drag-placeholder]')).toHaveCount(0)
+  const droppedBox = await page.locator(`[data-node-id="${sourceId}"]`).boundingBox()
+  expect(droppedBox).not.toBeNull()
+  expect(Math.abs((droppedBox?.x ?? 0) - placeholderBox.x)).toBeLessThan(2)
+  expect(Math.abs((droppedBox?.y ?? 0) - placeholderBox.y)).toBeLessThan(2)
+})
+
 test('cancels a drag preview with Escape', async ({ page }) => {
   const nodes = page.locator('[data-node-id][data-depth="2"]')
   const source = nodes.nth(0)

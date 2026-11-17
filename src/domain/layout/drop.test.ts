@@ -190,4 +190,42 @@ describe('drag drop resolution', () => {
       resolveDropTarget(layout, a.id, a1.x - 10, a1.y + a1.height / 2, 'logic-right'),
     ).toBeNull()
   })
+
+  it('targets the gap between siblings even outside the snap radius', () => {
+    const { layout, root, a, a1, b } = makeLayout()
+    const subtreeBottom = Math.max(a.y + a.height, a1.y + a1.height)
+    const y = (subtreeBottom + b.y) / 2
+    const x = b.x + b.width / 2
+
+    expect(resolveDropTarget(layout, a1.id, x, y, 'logic-right', { snapRadius: 0 })).toEqual({
+      nodeId: b.id,
+      mode: 'before',
+      newParentId: root.id,
+      index: 1,
+    })
+  })
+
+  it('targets the gap between siblings in the vertical layout', () => {
+    const { layout, root, a, a1, b } = makeLayout('org-down')
+    const subtreeRight = Math.max(a.x + a.width, a1.x + a1.width)
+    const x = (subtreeRight + b.x) / 2
+    const y = b.y + b.height / 2
+
+    expect(resolveDropTarget(layout, a1.id, x, y, 'org-down', { snapRadius: 0 })).toEqual({
+      nodeId: b.id,
+      mode: 'before',
+      newParentId: root.id,
+      index: 1,
+    })
+  })
+
+  it('does not target a gap when the pointer is outside the gap band', () => {
+    const { layout, b, a1 } = makeLayout()
+
+    expect(
+      resolveDropTarget(layout, a1.id, b.x + b.width / 2, b.y + b.height + 40, 'logic-right', {
+        snapRadius: 0,
+      }),
+    ).toBeNull()
+  })
 })
