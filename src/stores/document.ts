@@ -184,6 +184,17 @@ export const useDocumentStore = defineStore('document', {
       this.historyBySheet = {}
       this.revision = 0
     },
+    loadExampleIntoCurrentSheet() {
+      const demo = createDemoSheet(useUiStore().locale)
+      const changed = this.mutate((draft) => {
+        draft.root = demo.root
+      })
+      if (!changed) return
+
+      this.selectedNodeId = this.doc.root.id
+      this.selectionBySheet[this.activeSheetId] = this.selectedNodeId
+      this.editingNodeId = null
+    },
     afterHistoryStep() {
       this.editingNodeId = null
       if (this.selectedNodeId && !findNode(this.doc.root, this.selectedNodeId)) {

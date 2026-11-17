@@ -1,11 +1,7 @@
 import { defineStore } from 'pinia'
 import { watch } from 'vue'
 
-import {
-  createBlankWorkbook,
-  createDemoSheet,
-  createWorkbookFromSheet,
-} from '@/domain/model/document'
+import { createBlankWorkbook } from '@/domain/model/document'
 import { safeParseWorkbook } from '@/domain/model/schema'
 import type { MindMapWorkbook } from '@/domain/model/types'
 import { translate } from '@/i18n'
@@ -274,7 +270,7 @@ export const useFileStore = defineStore('file', {
       this.loadWorkbook(workbook, null)
     },
     loadExample() {
-      this.requestLoadWorkbook(createWorkbookFromSheet(createDemoSheet(useUiStore().locale)))
+      useDocumentStore().loadExampleIntoCurrentSheet()
     },
     loadExternalWorkbook(workbook: MindMapWorkbook) {
       useDocumentStore().loadWorkbook(workbook)

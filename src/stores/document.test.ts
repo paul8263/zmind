@@ -269,6 +269,35 @@ describe('document store', () => {
     expect(store.moveSheet(thirdId, 0)).toBe(true)
     expect(store.sheets.map((sheet) => sheet.id)).toEqual([thirdId, firstId, secondId])
   })
+
+  it('loads the example into the current sheet only', () => {
+    const store = useDocumentStore()
+    const firstId = store.activeSheetId
+    const secondId = store.addSheet()
+    store.renameSheet(secondId, '计划')
+    const secondRootId = store.doc.root.id
+    store.addChildTo(secondRootId)
+
+    const firstSheetBefore = JSON.parse(JSON.stringify(store.findSheet(firstId)))
+    const secondTitle = store.findSheet(secondId)?.title
+
+    store.loadExampleIntoCurrentSheet()
+
+    expect(store.sheets).toHaveLength(2)
+    expect(store.activeSheetId).toBe(secondId)
+    expect(store.findSheet(secondId)?.title).toBe(secondTitle)
+    expect(store.doc.root.title).toBe('Zmind')
+    expect(store.doc.root.id).not.toBe(secondRootId)
+    expect(store.doc.root.children.map((child) => child.title)).toEqual([
+      '快速记录',
+      '自动布局',
+      '画布操作',
+    ])
+    expect(store.findSheet(firstId)).toEqual(firstSheetBefore)
+    expect(store.selectedNodeId).toBe(store.doc.root.id)
+    expect(store.editingNodeId).toBeNull()
+    expect(store.canUndo).toBe(true)
+  })
 })
 
 describe('document markers', () => {

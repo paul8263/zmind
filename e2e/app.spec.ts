@@ -459,6 +459,37 @@ test('cancels a drag preview with Escape', async ({ page }) => {
   expect(Math.abs((restoredBox?.y ?? 0) - sourceBox.y)).toBeLessThan(2)
 })
 
+test('loads the example into the current canvas only', async ({ page }) => {
+  const canvas = page.locator('[data-mindmap-canvas]')
+  const tabs = page.locator('[data-sheet-tab]')
+
+  await page.locator('[data-node-id][data-depth="0"]').click()
+  await page.keyboard.press('Tab')
+  const editor = page.locator('[data-node-editor]')
+  await editor.fill('First sheet only')
+  await editor.press('Enter')
+
+  await page.locator('[data-sheet-add]').click()
+  await page.locator('[data-empty-add]').click()
+  await page.locator('[data-node-editor]').fill('Second sheet topic')
+  await page.locator('[data-node-editor]').press('Enter')
+  await expect(canvas.getByText('Second sheet topic')).toBeVisible()
+
+  await page.locator('[data-open-onboarding]').click()
+  await page.locator('[data-onboarding-example]').click()
+
+  await expect(canvas.getByText('快速记录')).toBeVisible()
+  await expect(canvas.getByText('Second sheet topic')).toHaveCount(0)
+
+  await tabs.nth(0).click()
+  await expect(canvas.getByText('First sheet only')).toBeVisible()
+  await expect(canvas.getByText('快速记录')).toBeVisible()
+
+  await tabs.nth(1).click()
+  await expect(canvas.getByText('快速记录')).toBeVisible()
+  await expect(canvas.getByText('Second sheet topic')).toHaveCount(0)
+})
+
 test('captures unexpected errors in the error overlay', async ({ page }) => {
   await page.evaluate(() => {
     setTimeout(() => {
