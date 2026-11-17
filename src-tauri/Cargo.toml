@@ -1,6 +1,6 @@
 [package]
 name = "zmind"
-version = "0.1.0"
+version = "1.0.0"
 description = "Zmind - a local-first mind map desktop app"
 authors = ["Zmind"]
 edition = "2024"
