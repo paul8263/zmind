@@ -32,10 +32,32 @@ function write(key: string, value: string) {
   }
 }
 
+export function detectLocale(languages?: readonly string[]): Locale {
+  const preferred =
+    languages ??
+    (typeof navigator === 'undefined'
+      ? []
+      : navigator.languages?.length
+        ? navigator.languages
+        : [navigator.language])
+  const primary = preferred[0]
+  if (!primary) return 'zh'
+  return /^zh(?:-|$)/i.test(primary) ? 'zh' : 'en'
+}
+
+function initialLocale(): Locale {
+  const stored = read(KEYS.locale, '')
+  if (stored === 'zh' || stored === 'en') return stored
+
+  const detected = detectLocale()
+  write(KEYS.locale, detected)
+  return detected
+}
+
 export const useUiStore = defineStore('ui', {
   state: () => ({
     darkMode: read(KEYS.dark, '0') === '1',
-    locale: (read(KEYS.locale, 'zh') === 'en' ? 'en' : 'zh') as Locale,
+    locale: initialLocale(),
     outlineOpen: read(KEYS.outline, '0') === '1',
     inspectorOpen: read(KEYS.inspector, '1') !== '0',
     inspectorTab: 'style' as InspectorTab,

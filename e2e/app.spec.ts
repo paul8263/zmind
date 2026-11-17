@@ -210,6 +210,22 @@ test('shows the guide on first launch', async ({ browser }) => {
   await context.close()
 })
 
+test('follows the system language on first launch', async ({ browser }) => {
+  const cases = [
+    { locale: 'zh-TW', label: '大纲视图' },
+    { locale: 'de-DE', label: 'Outline' },
+  ]
+
+  for (const { locale, label } of cases) {
+    const context = await browser.newContext({ locale })
+    const page = await context.newPage()
+    await page.goto('http://localhost:4173/')
+
+    await expect(page.locator('[data-toggle-outline]')).toHaveAttribute('title', label)
+    await context.close()
+  }
+})
+
 test('culls offscreen nodes when zoomed in', async ({ page }) => {
   const canvas = page.locator('[data-mindmap-canvas]')
   await expect(canvas).toHaveAttribute('data-total-nodes', '13')

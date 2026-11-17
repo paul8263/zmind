@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { useDocumentStore } from '@/stores/document'
+import { useUiStore } from '@/stores/ui'
 
 import SheetBar from './SheetBar.vue'
 
@@ -12,6 +13,7 @@ describe('SheetBar', () => {
   beforeEach(() => {
     pinia = createPinia()
     setActivePinia(pinia)
+    useUiStore().setLocale('zh')
   })
 
   function mountBar() {
