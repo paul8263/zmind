@@ -320,6 +320,105 @@ test('adds markers in front of the topic text from vertical sections', async ({ 
   expect(markerBox?.x).toBeLessThan(textBox?.x ?? 0)
 })
 
+test('previews the drop position and reflows nodes while dragging', async ({ page }) => {
+  const nodes = page.locator('[data-node-id][data-depth="2"]')
+  const source = nodes.nth(0)
+  const target = nodes.nth(1)
+  const sourceId = await source.getAttribute('data-node-id')
+  const sourceBox = await source.boundingBox()
+  const targetBox = await target.boundingBox()
+  if (!sourceId || !sourceBox || !targetBox) throw new Error('missing drag bounds')
+
+  const before = await page.evaluate(() =>
+    Object.fromEntries(
+      [...document.querySelectorAll<HTMLElement>('[data-node-id]')].map((element) => [
+        element.dataset.nodeId,
+        element.getBoundingClientRect().toJSON(),
+      ]),
+    ),
+  )
+
+  await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(
+    sourceBox.x + sourceBox.width / 2 + 10,
+    sourceBox.y + sourceBox.height / 2,
+    {
+      steps: 3,
+    },
+  )
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, {
+    steps: 8,
+  })
+
+  await expect(page.locator('[data-drag-ghost]')).toBeVisible()
+  const placeholder = page.locator('[data-drag-placeholder]')
+  await expect(placeholder).toBeVisible()
+  const placeholderBox = await placeholder.boundingBox()
+  if (!placeholderBox) throw new Error('missing drop placeholder')
+
+  const moved = await page.evaluate(
+    ({ before, sourceId }) => {
+      return [...document.querySelectorAll<HTMLElement>('[data-node-id]')]
+        .filter((element) => element.dataset.nodeId !== sourceId)
+        .filter((element) => {
+          const previous = before[element.dataset.nodeId ?? '']
+          const current = element.getBoundingClientRect()
+          return (
+            previous &&
+            (Math.abs(current.x - previous.x) > 1 || Math.abs(current.y - previous.y) > 1)
+          )
+        }).length
+    },
+    { before, sourceId },
+  )
+  expect(moved).toBeGreaterThan(0)
+
+  await page.mouse.up()
+
+  await expect(page.locator('[data-drag-ghost]')).toHaveCount(0)
+  await expect(page.locator('[data-drag-placeholder]')).toHaveCount(0)
+
+  const droppedBox = await page.locator(`[data-node-id="${sourceId}"]`).boundingBox()
+  expect(droppedBox).not.toBeNull()
+  expect(Math.abs((droppedBox?.x ?? 0) - placeholderBox.x)).toBeLessThan(2)
+  expect(Math.abs((droppedBox?.y ?? 0) - placeholderBox.y)).toBeLessThan(2)
+})
+
+test('cancels a drag preview with Escape', async ({ page }) => {
+  const nodes = page.locator('[data-node-id][data-depth="2"]')
+  const source = nodes.nth(0)
+  const target = nodes.nth(1)
+  const sourceId = await source.getAttribute('data-node-id')
+  const sourceBox = await source.boundingBox()
+  const targetBox = await target.boundingBox()
+  if (!sourceId || !sourceBox || !targetBox) throw new Error('missing drag bounds')
+
+  await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(
+    sourceBox.x + sourceBox.width / 2 + 10,
+    sourceBox.y + sourceBox.height / 2,
+    {
+      steps: 3,
+    },
+  )
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, {
+    steps: 8,
+  })
+  await expect(page.locator('[data-drag-placeholder]')).toBeVisible()
+
+  await page.keyboard.press('Escape')
+
+  await expect(page.locator('[data-drag-placeholder]')).toHaveCount(0)
+  await expect(page.locator('[data-drag-ghost]')).toHaveCount(0)
+
+  const restoredBox = await page.locator(`[data-node-id="${sourceId}"]`).boundingBox()
+  expect(restoredBox).not.toBeNull()
+  expect(Math.abs((restoredBox?.x ?? 0) - sourceBox.x)).toBeLessThan(2)
+  expect(Math.abs((restoredBox?.y ?? 0) - sourceBox.y)).toBeLessThan(2)
+})
+
 test('captures unexpected errors in the error overlay', async ({ page }) => {
   await page.evaluate(() => {
     setTimeout(() => {

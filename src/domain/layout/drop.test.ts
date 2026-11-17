@@ -120,4 +120,74 @@ describe('drag drop resolution', () => {
       index: 1,
     })
   })
+
+  it('snaps to a nearby node when the pointer is outside its bounds', () => {
+    const { layout, root, b, a1 } = makeLayout()
+    const x = b.x + b.width / 2
+
+    expect(resolveDropTarget(layout, a1.id, x, b.y - 4, 'logic-right', { snapRadius: 5 })).toEqual({
+      nodeId: b.id,
+      mode: 'before',
+      newParentId: root.id,
+      index: 1,
+    })
+
+    expect(resolveDropTarget(layout, a1.id, x, b.y + b.height + 10, 'logic-right')).toEqual({
+      nodeId: b.id,
+      mode: 'after',
+      newParentId: root.id,
+      index: 2,
+    })
+  })
+
+  it('treats the side edge as a child drop for horizontal layouts', () => {
+    const { layout, b, a1 } = makeLayout()
+
+    expect(
+      resolveDropTarget(layout, a1.id, b.x + b.width + 10, b.y + b.height / 2, 'logic-right'),
+    ).toEqual({
+      nodeId: b.id,
+      mode: 'child',
+      newParentId: b.id,
+      index: 0,
+    })
+  })
+
+  it('treats the side edge as a sibling drop for the vertical layout', () => {
+    const { layout, root, b, a1 } = makeLayout('org-down')
+
+    expect(resolveDropTarget(layout, a1.id, b.x - 10, b.y + b.height / 2, 'org-down')).toEqual({
+      nodeId: b.id,
+      mode: 'before',
+      newParentId: root.id,
+      index: 1,
+    })
+
+    expect(
+      resolveDropTarget(layout, a1.id, b.x + b.width / 2, b.y + b.height + 10, 'org-down'),
+    ).toEqual({
+      nodeId: b.id,
+      mode: 'child',
+      newParentId: b.id,
+      index: 0,
+    })
+  })
+
+  it('does not snap beyond the configured radius', () => {
+    const { layout, b, a1 } = makeLayout()
+
+    expect(
+      resolveDropTarget(layout, a1.id, b.x + b.width / 2, b.y + b.height + 40, 'logic-right', {
+        snapRadius: 24,
+      }),
+    ).toBeNull()
+  })
+
+  it('does not snap to the dragged node or its descendants from outside', () => {
+    const { layout, a, a1 } = makeLayout()
+
+    expect(
+      resolveDropTarget(layout, a.id, a1.x - 10, a1.y + a1.height / 2, 'logic-right'),
+    ).toBeNull()
+  })
 })

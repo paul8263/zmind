@@ -121,7 +121,7 @@ function handleContextMenu(event: MouseEvent) {
 
 <template>
   <div
-    class="absolute flex cursor-grab items-center transition-shadow select-none active:cursor-grabbing"
+    class="absolute flex cursor-grab items-center transition-shadow select-none active:cursor-grabbing motion-safe:transition-[left,top,box-shadow] motion-safe:duration-150 motion-safe:ease-out"
     :class="{ 'opacity-30': dragging }"
     :style="nodeStyle"
     :data-node-id="node.id"

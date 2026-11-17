@@ -12,13 +12,24 @@ import {
   Trash2,
   X,
 } from '@lucide/vue'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue'
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  toRaw,
+  watch,
+  type Component,
+} from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { useLayout } from '@/composables/useLayout'
 import { cullLayout } from '@/domain/layout/culling'
 import { resolveDropTarget, type DropTarget } from '@/domain/layout/drop'
 import type { LayoutNode } from '@/domain/layout/logical'
+import { buildDropPreview, type DropPreview } from '@/domain/layout/preview'
 import { resolveNodeStyle } from '@/domain/layout/style'
 import { SHORTCUT_GROUPS } from '@/domain/shortcuts'
 import { useI18n } from '@/i18n'
@@ -70,6 +81,9 @@ const { t } = useI18n()
 
 const containerRef = ref<HTMLDivElement | null>(null)
 const drag = ref<DragState | null>(null)
+const dropPreview = shallowRef<DropPreview | null>(null)
+let previewKey: string | null = null
+const previewCache = new Map<string, DropPreview | null>()
 const shortcutsOpen = ref(false)
 const canvasSize = ref({ width: 0, height: 0 })
 const contextMenu = ref<ContextMenuState | null>(null)
@@ -92,17 +106,24 @@ const visibleViewport = computed(() => {
     height: height / scale + margin * 2,
   }
 })
+const activeLayout = computed(() => dropPreview.value?.layout ?? layout.value)
 const renderLayout = computed(() => {
   const viewport = visibleViewport.value
-  if (!viewport) return layout.value
+  if (!viewport) return activeLayout.value
 
-  const culled = cullLayout(layout.value, viewport)
+  const culled = cullLayout(activeLayout.value, viewport)
   const editingId = docStore.editingNodeId
   if (editingId && !culled.nodes.some((node) => node.id === editingId)) {
-    const editingNode = layout.value.byId.get(editingId)
+    const editingNode = activeLayout.value.byId.get(editingId)
     if (editingNode) return { ...culled, nodes: [...culled.nodes, editingNode] }
   }
   return culled
+})
+const visibleNodes = computed(() => {
+  const nodes = renderLayout.value.nodes
+  const draggedId = drag.value?.active ? drag.value.nodeId : null
+  if (!dropPreview.value || !draggedId) return nodes
+  return nodes.filter((node) => node.id !== draggedId)
 })
 const isEmpty = computed(() => docStore.doc.root.children.length === 0 && !docStore.editingNodeId)
 const contextNode = computed(() => {
@@ -239,7 +260,22 @@ const ghostStyle = computed(() => {
   }
 })
 
+const dropPlaceholderStyle = computed(() => {
+  const ghost = dropPreview.value?.ghost
+  if (!ghost) return null
+
+  return {
+    left: `${ghost.x}px`,
+    top: `${ghost.y}px`,
+    width: `${ghost.width}px`,
+    height: `${ghost.height}px`,
+    borderRadius: `${ghost.visual.borderRadius}px`,
+  }
+})
+
 const dropIndicator = computed(() => {
+  if (dropPreview.value) return null
+
   const state = drag.value
   const node = dropNode.value
   const target = state?.target
@@ -329,6 +365,39 @@ function toWorld(clientX: number, clientY: number) {
     x: (clientX - rect.left - viewportStore.x) / viewportStore.scale,
     y: (clientY - rect.top - viewportStore.y) / viewportStore.scale,
   }
+}
+
+function dropTargetKey(target: DropTarget | null): string | null {
+  return target ? `${target.nodeId}|${target.newParentId}|${target.index}|${target.mode}` : null
+}
+
+function clearDropPreview() {
+  dropPreview.value = null
+  previewKey = null
+  previewCache.clear()
+}
+
+function refreshDropPreview() {
+  const state = drag.value
+  const target = state?.target ?? null
+  const key = dropTargetKey(target)
+
+  if (key === previewKey) return
+  previewKey = key
+
+  if (!state || !target || !key) {
+    dropPreview.value = null
+    return
+  }
+
+  if (previewCache.has(key)) {
+    dropPreview.value = previewCache.get(key) ?? null
+    return
+  }
+
+  const preview = buildDropPreview(toRaw(docStore.doc), theme.value, state.nodeId, target)
+  previewCache.set(key, preview)
+  dropPreview.value = preview
 }
 
 function fitToView() {
@@ -492,6 +561,7 @@ function onNodeDragStart(id: string, event: PointerEvent) {
   if (!node?.parentId || docStore.editingNodeId) return
 
   closeContextMenu()
+  clearDropPreview()
   const point = toWorld(event.clientX, event.clientY)
   drag.value = {
     nodeId: id,
@@ -531,6 +601,7 @@ function updateDrag(event: PointerEvent) {
     point.y,
     docStore.doc.structure,
   )
+  refreshDropPreview()
 }
 
 function finishDrag() {
@@ -543,6 +614,7 @@ function finishDrag() {
   }
 
   drag.value = null
+  clearDropPreview()
   if (containerRef.value?.hasPointerCapture(state.pointerId)) {
     containerRef.value.releasePointerCapture(state.pointerId)
   }
@@ -554,6 +626,7 @@ function cancelDrag() {
   if (!state) return
 
   drag.value = null
+  clearDropPreview()
   if (containerRef.value?.hasPointerCapture(state.pointerId)) {
     containerRef.value.releasePointerCapture(state.pointerId)
   }
@@ -932,9 +1005,9 @@ onBeforeUnmount(() => {
       class="absolute top-0 left-0 origin-top-left will-change-transform"
       :style="transformStyle"
     >
-      <ConnectionLayer :connections="renderLayout.connections" :bounds="layout.bounds" />
+      <ConnectionLayer :connections="renderLayout.connections" :bounds="activeLayout.bounds" />
       <TopicNodeView
-        v-for="node in renderLayout.nodes"
+        v-for="node in visibleNodes"
         :key="node.id"
         v-memo="nodeMemo(node)"
         :node="node"
@@ -952,6 +1025,13 @@ onBeforeUnmount(() => {
       />
 
       <div
+        v-if="dropPlaceholderStyle"
+        class="pointer-events-none absolute z-10 border-2 border-dashed border-sky-500 bg-sky-400/10"
+        :style="dropPlaceholderStyle"
+        data-drag-placeholder
+      />
+
+      <div
         v-if="dropIndicator?.kind === 'child'"
         class="pointer-events-none absolute border-2 border-dashed border-sky-500 bg-sky-400/10"
         :style="dropIndicator.style"
@@ -964,8 +1044,9 @@ onBeforeUnmount(() => {
 
       <div
         v-if="drag?.active && dragNode"
-        class="pointer-events-none absolute flex items-center justify-center border-2 text-center opacity-90 shadow-xl"
+        class="pointer-events-none absolute z-20 flex items-center justify-center border-2 text-center opacity-90 shadow-xl"
         :style="ghostStyle"
+        data-drag-ghost
       >
         <span class="w-full break-words whitespace-pre-wrap">
           {{ dragNode.node.title || t('topic.untitled') }}
