@@ -490,8 +490,6 @@ onBeforeUnmount(() => {
             <BookOpen />
           </Button>
         </div>
-
-        <span class="hidden text-xs text-muted-foreground 2xl:inline">{{ t('app.badge') }}</span>
       </div>
     </header>
 
