@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ChevronDown, RotateCcw } from '@lucide/vue'
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import { useI18n } from '@/i18n'
+import { closeTransientOverlay, openTransientOverlay } from '@/lib/transientOverlay'
 
 const props = defineProps<{
   label: string
@@ -30,11 +31,21 @@ const channels = computed(() => ({
   b: Number.parseInt(draft.value.slice(5, 7), 16),
 }))
 
+let overlayToken: symbol | null = null
+
 watch(open, (isOpen) => {
-  if (!isOpen) return
-  draft.value = normalizeHex(props.value)
-  customOpen.value = false
+  if (isOpen) {
+    overlayToken = openTransientOverlay()
+    draft.value = normalizeHex(props.value)
+    customOpen.value = false
+    return
+  }
+
+  closeTransientOverlay(overlayToken)
+  overlayToken = null
 })
+
+onBeforeUnmount(() => closeTransientOverlay(overlayToken))
 
 function normalizeHex(value: string): string {
   const match = /^#?([0-9a-f]{6})$/i.exec(value.trim())

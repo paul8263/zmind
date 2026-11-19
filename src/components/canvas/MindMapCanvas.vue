@@ -33,6 +33,7 @@ import { buildDropPreview, type DropPreview } from '@/domain/layout/preview'
 import { resolveNodeStyle } from '@/domain/layout/style'
 import { SHORTCUT_GROUPS } from '@/domain/shortcuts'
 import { useI18n } from '@/i18n'
+import { hasOpenTransientOverlay } from '@/lib/transientOverlay'
 import { useDocumentStore } from '@/stores/document'
 import { useUiStore } from '@/stores/ui'
 import { useViewportStore } from '@/stores/viewport'
@@ -540,11 +541,17 @@ function onWheel(event: WheelEvent) {
   }
 }
 
+function dismissTransientOverlay(): boolean {
+  // A select popup is browser-native, so the focused select is the only signal that it may be open.
+  return hasOpenTransientOverlay() || document.activeElement instanceof HTMLSelectElement
+}
+
 function onBackgroundPointerDown(event: PointerEvent) {
   closeContextMenu()
   if (event.button !== 0 && event.button !== 1) return
   if (docStore.editingNodeId || drag.value || shortcutsOpen.value) return
   if (isEditableTarget(event.target)) return
+  if (event.button === 0 && dismissTransientOverlay()) return
 
   const element = event.currentTarget as HTMLElement
   element.focus({ preventScroll: true })

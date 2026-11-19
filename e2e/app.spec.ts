@@ -323,6 +323,38 @@ test('opens common colors for every style color row', async ({ page }) => {
   }
 })
 
+test('dismisses the color popover before clearing the canvas selection', async ({ page }) => {
+  await page.locator('[data-toggle-inspector]').click()
+  await page.locator('[data-node-id][data-depth="1"]').first().click()
+  await expect(page.locator('[data-color-row="fill"]')).toBeVisible()
+
+  await page.locator('[data-color-trigger="fill"]').click()
+  await expect(page.locator('[data-color-popover="fill"]')).toBeVisible()
+
+  const canvas = page.locator('[data-mindmap-canvas]')
+  await canvas.click({ position: { x: 16, y: 16 } })
+
+  await expect(page.locator('[data-color-popover="fill"]')).toHaveCount(0)
+  await expect(page.locator('[data-color-row="fill"]')).toBeVisible()
+
+  await canvas.click({ position: { x: 16, y: 16 } })
+  await expect(page.locator('[data-color-row="fill"]')).toHaveCount(0)
+})
+
+test('keeps the selection on the first canvas click after using a select', async ({ page }) => {
+  await page.locator('[data-toggle-inspector]').click()
+  await page.locator('[data-node-id][data-depth="1"]').first().click()
+
+  await page.locator('[data-style-line-style]').focus()
+  const canvas = page.locator('[data-mindmap-canvas]')
+  await canvas.click({ position: { x: 16, y: 16 } })
+
+  await expect(page.locator('[data-color-row="fill"]')).toBeVisible()
+
+  await canvas.click({ position: { x: 16, y: 16 } })
+  await expect(page.locator('[data-color-row="fill"]')).toHaveCount(0)
+})
+
 test('adds a child from the node context menu', async ({ page }) => {
   const canvas = page.locator('[data-mindmap-canvas]')
   await expect(canvas).toHaveAttribute('data-total-nodes', '13')
