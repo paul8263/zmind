@@ -274,6 +274,55 @@ test('switches themes without stale node styles', async ({ page }) => {
     .not.toBe(before)
 })
 
+test('picks a common fill color while keeping the custom picker', async ({ page }) => {
+  await page.locator('[data-toggle-inspector]').click()
+  const root = page.locator('[data-node-id][data-depth="0"]')
+  await root.click()
+
+  const row = page.locator('[data-color-row="fill"]')
+  await expect(row.locator('[data-color-swatch]')).toHaveCount(0)
+  await row.locator('[data-color-trigger="fill"]').click()
+
+  const popover = page.locator('[data-color-popover="fill"]')
+  await popover.locator('[data-color-custom-toggle]').click()
+  await expect(popover.locator('[data-color-custom-panel]')).toBeVisible()
+  await expect(popover.locator('[data-color-hex]')).toBeVisible()
+
+  await popover.locator('[data-color-swatch="#ef4444"]').click()
+
+  await expect
+    .poll(async () => root.evaluate((element) => getComputedStyle(element).backgroundColor))
+    .toBe('rgb(239, 68, 68)')
+  await expect(popover).toHaveCount(0)
+
+  await row.locator('[data-color-trigger="fill"]').click()
+  await popover.locator('[data-color-custom-toggle]').click()
+  const hex = popover.locator('[data-color-hex]')
+  await hex.fill('#123456')
+  await hex.press('Enter')
+
+  await expect
+    .poll(async () => root.evaluate((element) => getComputedStyle(element).backgroundColor))
+    .toBe('rgb(18, 52, 86)')
+  await expect(popover).toBeVisible()
+  await page.keyboard.press('Escape')
+})
+
+test('opens common colors for every style color row', async ({ page }) => {
+  await page.locator('[data-toggle-inspector]').click()
+  await page.locator('[data-node-id][data-depth="1"]').first().click()
+
+  for (const name of ['fill', 'textColor', 'borderColor', 'lineColor']) {
+    await page.locator(`[data-color-trigger="${name}"]`).click()
+
+    const popover = page.locator(`[data-color-popover="${name}"]`)
+    await expect(popover.locator('[data-color-swatch]')).toHaveCount(24)
+
+    await page.keyboard.press('Escape')
+    await expect(popover).toHaveCount(0)
+  }
+})
+
 test('adds a child from the node context menu', async ({ page }) => {
   const canvas = page.locator('[data-mindmap-canvas]')
   await expect(canvas).toHaveAttribute('data-total-nodes', '13')

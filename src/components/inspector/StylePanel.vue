@@ -34,6 +34,33 @@ const shapeOptions: { value: NodeShape; labelKey: string }[] = [
   { value: 'none', labelKey: 'style.shape.none' },
 ]
 
+const COLOR_PALETTE = [
+  '#ffffff',
+  '#f8fafc',
+  '#e2e8f0',
+  '#cbd5e1',
+  '#94a3b8',
+  '#64748b',
+  '#334155',
+  '#0f172a',
+  '#fecaca',
+  '#f87171',
+  '#ef4444',
+  '#fb923c',
+  '#fbbf24',
+  '#facc15',
+  '#a3e635',
+  '#4ade80',
+  '#22c55e',
+  '#2dd4bf',
+  '#38bdf8',
+  '#60a5fa',
+  '#3b82f6',
+  '#818cf8',
+  '#a855f7',
+  '#ec4899',
+]
+
 const defaultFill = computed(() =>
   resolved.value.fill === 'transparent' ? '#ffffff' : resolved.value.fill,
 )
@@ -133,23 +160,29 @@ function resetStyle() {
           {{ t('style.colors') }}
         </h3>
         <InspectorColorRow
+          name="fill"
           :label="t('style.fill')"
           :value="selected.style?.fill ?? defaultFill"
           :is-default="selected.style?.fill === undefined"
+          :palette="COLOR_PALETTE"
           @change="onColor('fill', $event)"
           @reset="clearColor('fill')"
         />
         <InspectorColorRow
+          name="textColor"
           :label="t('style.textColor')"
           :value="selected.style?.textColor ?? resolved.textColor"
           :is-default="selected.style?.textColor === undefined"
+          :palette="COLOR_PALETTE"
           @change="onColor('textColor', $event)"
           @reset="clearColor('textColor')"
         />
         <InspectorColorRow
+          name="borderColor"
           :label="t('style.borderColor')"
           :value="selected.style?.borderColor ?? resolved.borderColor"
           :is-default="selected.style?.borderColor === undefined"
+          :palette="COLOR_PALETTE"
           @change="onColor('borderColor', $event)"
           @reset="clearColor('borderColor')"
         />
@@ -259,9 +292,11 @@ function resetStyle() {
         </p>
         <template v-else>
           <InspectorColorRow
+            name="lineColor"
             :label="t('style.lineColor')"
             :value="selected.style?.lineColor ?? layoutNode?.branchColor ?? theme.rootFill"
             :is-default="selected.style?.lineColor === undefined"
+            :palette="COLOR_PALETTE"
             @change="onColor('lineColor', $event)"
             @reset="clearColor('lineColor')"
           />
